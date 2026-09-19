@@ -1,0 +1,727 @@
+{
+  "$schema": "insighttrader-dataset-v1",
+  "generatedAt": "2026-09-19T14:15:00Z",
+  "summary": {
+    "activeSignalsCount": 7,
+    "avgConfidenceScorePct": 86.8,
+    "totalTrackedVolumeYtdUsd": 55880000,
+    "signalWinRatePct": 77.4,
+    "avgSignalAlphaPct": 11.3,
+    "totalDisclosuresCount": 12,
+    "trackedPoliticiansCount": 8,
+    "lastUpdatedIso": "2026-09-19T14:15:00Z"
+  },
+  "politicians": [
+    {
+      "id": "pol-pelosi",
+      "name": "Nancy Pelosi",
+      "chamber": "House",
+      "party": "Democrat",
+      "state": "CA",
+      "district": "CA-11",
+      "committees": ["House Committee on Appropriations (Honorary / Former Speaker)"],
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 48,
+      "tradeVolumeYtdUsd": 14250000,
+      "estimatedWinRatePct": 71.4,
+      "alphaVsSp500Pct": 18.2,
+      "lastActiveDate": "2026-08-22"
+    },
+    {
+      "id": "pol-tuberville",
+      "name": "Tommy Tuberville",
+      "chamber": "Senate",
+      "party": "Republican",
+      "state": "AL",
+      "committees": [
+        "Senate Committee on Armed Services",
+        "Senate Committee on Agriculture, Nutrition, and Forestry",
+        "Senate Committee on Veterans' Affairs"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 84,
+      "tradeVolumeYtdUsd": 6850000,
+      "estimatedWinRatePct": 65.8,
+      "alphaVsSp500Pct": 12.6,
+      "lastActiveDate": "2026-09-02"
+    },
+    {
+      "id": "pol-mccaul",
+      "name": "Michael McCaul",
+      "chamber": "House",
+      "party": "Republican",
+      "state": "TX",
+      "district": "TX-10",
+      "committees": [
+        "House Committee on Foreign Affairs (Chair)",
+        "House Committee on Homeland Security"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 62,
+      "tradeVolumeYtdUsd": 11400000,
+      "estimatedWinRatePct": 69.2,
+      "alphaVsSp500Pct": 15.4,
+      "lastActiveDate": "2026-08-15"
+    },
+    {
+      "id": "pol-khanna",
+      "name": "Ro Khanna",
+      "chamber": "House",
+      "party": "Democrat",
+      "state": "CA",
+      "district": "CA-17",
+      "committees": [
+        "House Committee on Armed Services (Subcommittee on Cyber & Innovation)",
+        "House Committee on Oversight and Accountability"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 76,
+      "tradeVolumeYtdUsd": 8920000,
+      "estimatedWinRatePct": 63.5,
+      "alphaVsSp500Pct": 9.8,
+      "lastActiveDate": "2026-09-08"
+    },
+    {
+      "id": "pol-gottheimer",
+      "name": "Josh Gottheimer",
+      "chamber": "House",
+      "party": "Democrat",
+      "state": "NJ",
+      "district": "NJ-05",
+      "committees": [
+        "House Financial Services Committee (Capital Markets Subcommittee)",
+        "Permanent Select Committee on Intelligence"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 53,
+      "tradeVolumeYtdUsd": 5430000,
+      "estimatedWinRatePct": 61.2,
+      "alphaVsSp500Pct": 8.1,
+      "lastActiveDate": "2026-08-30"
+    },
+    {
+      "id": "pol-mullin",
+      "name": "Markwayne Mullin",
+      "chamber": "Senate",
+      "party": "Republican",
+      "state": "OK",
+      "committees": [
+        "Senate Committee on Armed Services",
+        "Senate Committee on Environment and Public Works",
+        "Senate Committee on Health, Education, Labor and Pensions"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 39,
+      "tradeVolumeYtdUsd": 3820000,
+      "estimatedWinRatePct": 67.4,
+      "alphaVsSp500Pct": 14.1,
+      "lastActiveDate": "2026-08-18"
+    },
+    {
+      "id": "pol-crenshaw",
+      "name": "Dan Crenshaw",
+      "chamber": "House",
+      "party": "Republican",
+      "state": "TX",
+      "district": "TX-02",
+      "committees": [
+        "House Committee on Energy and Commerce",
+        "Permanent Select Committee on Intelligence"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 31,
+      "tradeVolumeYtdUsd": 2950000,
+      "estimatedWinRatePct": 68.0,
+      "alphaVsSp500Pct": 16.3,
+      "lastActiveDate": "2026-07-28"
+    },
+    {
+      "id": "pol-greene",
+      "name": "Marjorie Taylor Greene",
+      "chamber": "House",
+      "party": "Republican",
+      "state": "GA",
+      "district": "GA-14",
+      "committees": [
+        "House Committee on Homeland Security",
+        "House Committee on Oversight and Accountability"
+      ],
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "totalTradesTracked": 42,
+      "tradeVolumeYtdUsd": 2180000,
+      "estimatedWinRatePct": 59.5,
+      "alphaVsSp500Pct": 5.7,
+      "lastActiveDate": "2026-08-27"
+    }
+  ],
+  "disclosures": [
+    {
+      "id": "disc-2026-001",
+      "politicianId": "pol-pelosi",
+      "politicianName": "Nancy Pelosi",
+      "relationship": "Spouse",
+      "ticker": "NVDA",
+      "assetName": "NVIDIA Corporation - Call Options ($140 Strike, Exp 01/2027)",
+      "transactionType": "BUY",
+      "transactionDate": "2026-07-14",
+      "disclosureDate": "2026-08-11",
+      "disclosureLagDays": 28,
+      "amountBracket": "$1,000,001 - $5,000,000",
+      "estimatedAmountUsd": 2500000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20023412.pdf",
+      "filingSource": "House Clerk",
+      "notes": "50 call option contracts exercised and 20 new LEAPs purchased"
+    },
+    {
+      "id": "disc-2026-002",
+      "politicianId": "pol-tuberville",
+      "politicianName": "Tommy Tuberville",
+      "relationship": "Self",
+      "ticker": "LMT",
+      "assetName": "Lockheed Martin Corporation - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-04",
+      "disclosureDate": "2026-09-02",
+      "disclosureLagDays": 29,
+      "amountBracket": "$100,001 - $250,000",
+      "estimatedAmountUsd": 175000,
+      "filingDocUrl": "https://efdsearch.senate.gov/search/view/ptr/89b145-tuberville-lmt.pdf",
+      "filingSource": "Senate Financial Disclosures",
+      "notes": "Purchased 2 business days prior to Senate Armed Services markup closed session"
+    },
+    {
+      "id": "disc-2026-003",
+      "politicianId": "pol-tuberville",
+      "politicianName": "Tommy Tuberville",
+      "relationship": "Self",
+      "ticker": "RTX",
+      "assetName": "RTX Corporation - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-05",
+      "disclosureDate": "2026-09-02",
+      "disclosureLagDays": 28,
+      "amountBracket": "$50,001 - $100,000",
+      "estimatedAmountUsd": 75000,
+      "filingDocUrl": "https://efdsearch.senate.gov/search/view/ptr/89b146-tuberville-rtx.pdf",
+      "filingSource": "Senate Financial Disclosures"
+    },
+    {
+      "id": "disc-2026-004",
+      "politicianId": "pol-mccaul",
+      "politicianName": "Michael McCaul",
+      "relationship": "Spouse",
+      "ticker": "TSM",
+      "assetName": "Taiwan Semiconductor Manufacturing Co Ltd - ADR",
+      "transactionType": "BUY",
+      "transactionDate": "2026-07-20",
+      "disclosureDate": "2026-08-15",
+      "disclosureLagDays": 26,
+      "amountBracket": "$250,001 - $500,000",
+      "estimatedAmountUsd": 375000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20024890.pdf",
+      "filingSource": "House Clerk",
+      "notes": "Pre-dates official diplomatic visit to Taipei chip manufacturing facilities"
+    },
+    {
+      "id": "disc-2026-005",
+      "politicianId": "pol-khanna",
+      "politicianName": "Ro Khanna",
+      "relationship": "Joint",
+      "ticker": "PLTR",
+      "assetName": "Palantir Technologies Inc. - Class A",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-12",
+      "disclosureDate": "2026-09-08",
+      "disclosureLagDays": 27,
+      "amountBracket": "$100,001 - $250,000",
+      "estimatedAmountUsd": 175000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20025911.pdf",
+      "filingSource": "House Clerk",
+      "notes": "Concurrent with DOD CMMC enterprise data architecture expansion hearings"
+    },
+    {
+      "id": "disc-2026-006",
+      "politicianId": "pol-gottheimer",
+      "politicianName": "Josh Gottheimer",
+      "relationship": "Self",
+      "ticker": "MSFT",
+      "assetName": "Microsoft Corporation - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-01",
+      "disclosureDate": "2026-08-30",
+      "disclosureLagDays": 29,
+      "amountBracket": "$15,001 - $50,000",
+      "estimatedAmountUsd": 32500,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20025401.pdf",
+      "filingSource": "House Clerk"
+    },
+    {
+      "id": "disc-2026-007",
+      "politicianId": "pol-crenshaw",
+      "politicianName": "Dan Crenshaw",
+      "relationship": "Self",
+      "ticker": "CRWD",
+      "assetName": "CrowdStrike Holdings Inc. - Class A",
+      "transactionType": "BUY",
+      "transactionDate": "2026-07-19",
+      "disclosureDate": "2026-07-28",
+      "disclosureLagDays": 9,
+      "amountBracket": "$50,001 - $100,000",
+      "estimatedAmountUsd": 75000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20023190.pdf",
+      "filingSource": "House Clerk",
+      "notes": "Bought during post-incident dip; unusually rapid disclosure (9 days)"
+    },
+    {
+      "id": "disc-2026-008",
+      "politicianId": "pol-mullin",
+      "politicianName": "Markwayne Mullin",
+      "relationship": "Joint",
+      "ticker": "XOM",
+      "assetName": "Exxon Mobil Corp - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-07-22",
+      "disclosureDate": "2026-08-18",
+      "disclosureLagDays": 27,
+      "amountBracket": "$250,001 - $500,000",
+      "estimatedAmountUsd": 375000,
+      "filingDocUrl": "https://efdsearch.senate.gov/search/view/ptr/89b152-mullin-xom.pdf",
+      "filingSource": "Senate Financial Disclosures",
+      "notes": "EPW committee hearing on federal offshore drilling leases followed 10 days later"
+    },
+    {
+      "id": "disc-2026-009",
+      "politicianId": "pol-greene",
+      "politicianName": "Marjorie Taylor Greene",
+      "relationship": "Self",
+      "ticker": "BA",
+      "assetName": "Boeing Co - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-03",
+      "disclosureDate": "2026-08-27",
+      "disclosureLagDays": 24,
+      "amountBracket": "$15,001 - $50,000",
+      "estimatedAmountUsd": 32500,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20025114.pdf",
+      "filingSource": "House Clerk"
+    },
+    {
+      "id": "disc-2026-010",
+      "politicianId": "pol-pelosi",
+      "politicianName": "Nancy Pelosi",
+      "relationship": "Spouse",
+      "ticker": "AVGO",
+      "assetName": "Broadcom Inc. - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-07-28",
+      "disclosureDate": "2026-08-22",
+      "disclosureLagDays": 25,
+      "amountBracket": "$1,000,001 - $5,000,000",
+      "estimatedAmountUsd": 2000000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20024988.pdf",
+      "filingSource": "House Clerk"
+    },
+    {
+      "id": "disc-2026-011",
+      "politicianId": "pol-mccaul",
+      "politicianName": "Michael McCaul",
+      "relationship": "Spouse",
+      "ticker": "ASML",
+      "assetName": "ASML Holding NV - ADR",
+      "transactionType": "SELL",
+      "transactionDate": "2026-08-08",
+      "disclosureDate": "2026-08-29",
+      "disclosureLagDays": 21,
+      "amountBracket": "$500,001 - $1,000,000",
+      "estimatedAmountUsd": 750000,
+      "filingDocUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20025344.pdf",
+      "filingSource": "House Clerk",
+      "notes": "Executed prior to Congressional committee report on multilateral lithography sanctions"
+    },
+    {
+      "id": "disc-2026-012",
+      "politicianId": "pol-tuberville",
+      "politicianName": "Tommy Tuberville",
+      "relationship": "Self",
+      "ticker": "NOC",
+      "assetName": "Northrop Grumman Corp - Common Stock",
+      "transactionType": "BUY",
+      "transactionDate": "2026-08-10",
+      "disclosureDate": "2026-09-02",
+      "disclosureLagDays": 23,
+      "amountBracket": "$50,001 - $100,000",
+      "estimatedAmountUsd": 75000,
+      "filingDocUrl": "https://efdsearch.senate.gov/search/view/ptr/89b147-tuberville-noc.pdf",
+      "filingSource": "Senate Financial Disclosures"
+    }
+  ],
+  "news": [
+    {
+      "id": "news-2026-101",
+      "headline": "Congress Fast-Tracks $8.2B Defense Modernization Authorization for Precision Standoff Munitions",
+      "source": "Defense News",
+      "publishedAt": "2026-08-08T14:30:00Z",
+      "summary": "The Senate Armed Services Committee approved confidential provisions accelerating multi-year procurement contracts for Lockheed Martin and RTX long-range munitions systems.",
+      "category": "Defense & Aerospace",
+      "relatedTickers": ["LMT", "RTX", "NOC"],
+      "sentiment": "Bullish",
+      "articleUrl": "https://www.defensenews.com/congress/2026/08/08/standoff-munitions-ndaa-amendment",
+      "reliabilityScorePct": 96
+    },
+    {
+      "id": "news-2026-102",
+      "headline": "Commerce Department Finalizes CHIPS Act Phase II Direct Funding for Advanced Packaging",
+      "source": "Reuters",
+      "publishedAt": "2026-07-18T09:15:00Z",
+      "summary": "U.S. officials announced final subsidy awards for high-bandwidth memory (HBM) and co-packaged optics, directly benefiting NVIDIA and Broadcom hardware architectures.",
+      "category": "Semiconductors & AI",
+      "relatedTickers": ["NVDA", "AVGO", "TSM"],
+      "sentiment": "Bullish",
+      "articleUrl": "https://www.reuters.com/technology/chips-act-phase-two-awards-2026-07-18",
+      "reliabilityScorePct": 94
+    },
+    {
+      "id": "news-2026-103",
+      "headline": "Pentagon Expands Sovereign AI Cloud Deployment; Palantir and Microsoft Chosen for Tactical Edge Nodes",
+      "source": "Bloomberg",
+      "publishedAt": "2026-08-16T16:45:00Z",
+      "summary": "A new multi-tier classified compute contract worth up to $1.2B was awarded to deploy specialized AI mission command software across Indo-Pacific command centers.",
+      "category": "Cybersecurity & Tech",
+      "relatedTickers": ["PLTR", "MSFT"],
+      "sentiment": "Bullish",
+      "articleUrl": "https://www.bloomberg.com/news/articles/2026-08-16/pentagon-tactical-cloud-award",
+      "reliabilityScorePct": 95
+    },
+    {
+      "id": "news-2026-104",
+      "headline": "House Foreign Affairs Committee Previews Tighter Sanctions on Semiconductor Lithography Export Waivers",
+      "source": "Politico Pro",
+      "publishedAt": "2026-08-12T11:20:00Z",
+      "summary": "Bipartisan leaders signaled that grandfathered DUV lithography servicing exemptions will not be renewed in the upcoming executive trade rules revision.",
+      "category": "Semiconductors & AI",
+      "relatedTickers": ["ASML", "AMAT", "LRCX"],
+      "sentiment": "Bearish",
+      "articleUrl": "https://www.politico.com/news/2026/08/12/house-foreign-affairs-chip-sanctions-preview",
+      "reliabilityScorePct": 92
+    },
+    {
+      "id": "news-2026-105",
+      "headline": "CISA Releases Mandatory Federal Zero-Trust Endpoint Directives Ahead of Q4 Deadline",
+      "source": "CyberScoop",
+      "publishedAt": "2026-07-24T13:10:00Z",
+      "summary": "Following audit findings, civilian agencies must deploy automated detection and response suites meeting strict EDR specifications, accelerating renewal cycles for enterprise providers.",
+      "category": "Cybersecurity & Tech",
+      "relatedTickers": ["CRWD", "PANW", "MSFT"],
+      "sentiment": "Bullish",
+      "articleUrl": "https://cyberscoop.com/cisa-binding-operational-directive-zero-trust-2026",
+      "reliabilityScorePct": 91
+    },
+    {
+      "id": "news-2026-106",
+      "headline": "Senate Energy Committee Advances Streamlined National Strategic Petroleum Reserve Refill Mandate",
+      "source": "Financial Times",
+      "publishedAt": "2026-07-26T18:00:00Z",
+      "summary": "Legislation aims to establish a floor purchase mechanism for domestic sweet crude, stabilizing long-term capital expenditure outlooks for Tier 1 Permian producers.",
+      "category": "Energy & Critical Minerals",
+      "relatedTickers": ["XOM", "CVX", "OXY"],
+      "sentiment": "Bullish",
+      "articleUrl": "https://www.ft.com/content/energy-policy-us-spr-mandate-2026",
+      "reliabilityScorePct": 89
+    },
+    {
+      "id": "news-2026-107",
+      "headline": "FAA Reauthorization Implementation Directs Comprehensive Quality Surveillance of Commercial Airframes",
+      "source": "Wall Street Journal",
+      "publishedAt": "2026-08-06T08:00:00Z",
+      "summary": "Federal oversight teams will permanently embed with suppliers, increasing near-term compliance expenditures while reducing airframe delivery forecast guidance.",
+      "category": "Defense & Aerospace",
+      "relatedTickers": ["BA", "SPR"],
+      "sentiment": "Bearish",
+      "articleUrl": "https://www.wsj.com/business/airlines/faa-commercial-surveillance-mandate-2026",
+      "reliabilityScorePct": 93
+    }
+  ],
+  "signals": [
+    {
+      "id": "sig-2026-001",
+      "ticker": "LMT",
+      "companyName": "Lockheed Martin Corporation",
+      "sector": "Defense & Aerospace",
+      "direction": "BULLISH",
+      "status": "ACTIVE",
+      "conviction": "High",
+      "confidenceScorePct": 94,
+      "timeHorizon": "3-6 Months",
+      "generatedAt": "2026-09-03T10:15:00Z",
+      "headline": "Senate Armed Services Member Buys LMT Standoff Munitions Spike Ahead of Classified NDAA Markup",
+      "thesis": "Sen. Tommy Tuberville (Senate Armed Services) acquired between $100k-$250k in LMT stock just 48 hours prior to the classified markup session that subsequently authorized $8.2B in multi-year precision standoff weapon procurement. Historical correlation between SASC member buys and multi-year procurement awards shows an 83% win rate over 120-day holding periods.",
+      "aiModel": "Nemotron-4-340B-Reward",
+      "evidence": {
+        "disclosures": [
+          {
+            "disclosureId": "disc-2026-002",
+            "politicianName": "Tommy Tuberville",
+            "transactionType": "BUY",
+            "transactionDate": "2026-08-04",
+            "amountBracket": "$100,001 - $250,000",
+            "committeeContext": "Senate Armed Services Committee (Direct jurisdictional review over munitions procurement lines)"
+          },
+          {
+            "disclosureId": "disc-2026-003",
+            "politicianName": "Tommy Tuberville",
+            "transactionType": "BUY",
+            "transactionDate": "2026-08-05",
+            "amountBracket": "$50,001 - $100,000",
+            "committeeContext": "Senate Armed Services Committee (Synergistic Patriot missile seeker subcontracts with RTX)"
+          }
+        ],
+        "newsCatalysts": [
+          {
+            "newsId": "news-2026-101",
+            "headline": "Congress Fast-Tracks $8.2B Defense Modernization Authorization for Precision Standoff Munitions",
+            "source": "Defense News",
+            "publishedAt": "2026-08-08T14:30:00Z",
+            "relevanceNote": "Confirmed markup provisions match the specific missile platforms manufactured at Lockheed's Pike County, AL facility."
+          }
+        ],
+        "legislativeHooks": [
+          "FY2027 NDAA Sec. 124 (Multi-Year Precision Fires Authorization)",
+          "Classified SASC Strategic Forces Subcommittee Markup Report"
+        ]
+      },
+      "keyRisks": [
+        "Continuing Resolution delays could push contract obligation dates into next fiscal quarter",
+        "Supply chain bottlenecks in solid rocket motor propellants could constrain margin realization"
+      ],
+      "metrics": {
+        "entryPrice": 542.5,
+        "currentPrice": 574.8,
+        "targetPrice": 620.0,
+        "stopLossPrice": 518.0,
+        "returnSinceSignalPct": 5.95,
+        "benchmarkReturnPct": 1.2
+      },
+      "tags": ["Armed Services", "NDAA", "Defense Contractor", "High Conviction"]
+    },
+    {
+      "id": "sig-2026-002",
+      "ticker": "NVDA",
+      "companyName": "NVIDIA Corporation",
+      "sector": "Semiconductors & AI",
+      "direction": "BULLISH",
+      "status": "ACTIVE",
+      "conviction": "High",
+      "confidenceScorePct": 91,
+      "timeHorizon": "6-12 Months",
+      "generatedAt": "2026-08-14T09:00:00Z",
+      "headline": "Pelosi Re-Ups Long-Term LEAPs in NVDA Following CHIPS Act Phase II Packaging Rules",
+      "thesis": "Former Speaker Pelosi disclosed multi-million dollar LEAP call options on NVDA expiring in 2027. The trade preceded the public finalization of Commerce Department CHIPS Phase II guidelines for advanced packaging and domestic accelerator manufacturing by 4 days. The Pelosi filing history on mega-cap tech options has demonstrated an average 38% annual alpha over the past 4 years.",
+      "aiModel": "Nemotron-70B-Instruct",
+      "evidence": {
+        "disclosures": [
+          {
+            "disclosureId": "disc-2026-001",
+            "politicianName": "Nancy Pelosi",
+            "transactionType": "BUY",
+            "transactionDate": "2026-07-14",
+            "amountBracket": "$1,000,001 - $5,000,000",
+            "committeeContext": "House Leadership / Appropriations Influence (Longstanding track record in tech policy alignment)"
+          },
+          {
+            "disclosureId": "disc-2026-010",
+            "politicianName": "Nancy Pelosi",
+            "transactionType": "BUY",
+            "transactionDate": "2026-07-28",
+            "amountBracket": "$1,000,001 - $5,000,000",
+            "committeeContext": "Coinciding custom silicon infrastructure buildout with Broadcom (AVGO)"
+          }
+        ],
+        "newsCatalysts": [
+          {
+            "newsId": "news-2026-102",
+            "headline": "Commerce Department Finalizes CHIPS Act Phase II Direct Funding for Advanced Packaging",
+            "source": "Reuters",
+            "publishedAt": "2026-07-18T09:15:00Z",
+            "relevanceNote": "Subsidies de-risk domestic foundry yields for next-generation B200 and Rubin architecture distribution."
+          }
+        ],
+        "legislativeHooks": [
+          "CHIPS Act Division A Sec. 102 Federal Incentive Fund tranche disbursement",
+          "National AI Research Resource (NAIRR) expansion allocation"
+        ]
+      },
+      "keyRisks": [
+        "Potential retaliatory export curbs from Asian trade partners on raw gallium/germanium",
+        "Valuation multiple compression if hyperscaler capital expenditures decelerate in H2"
+      ],
+      "metrics": {
+        "entryPrice": 122.4,
+        "currentPrice": 138.9,
+        "targetPrice": 165.0,
+        "stopLossPrice": 114.0,
+        "returnSinceSignalPct": 13.48,
+        "benchmarkReturnPct": 3.4
+      },
+      "tags": ["Mega Tech", "Options Whales", "CHIPS Act", "AI Accelerators"]
+    },
+    {
+      "id": "sig-2026-003",
+      "ticker": "PLTR",
+      "companyName": "Palantir Technologies Inc.",
+      "sector": "Cybersecurity & Tech",
+      "direction": "BULLISH",
+      "status": "ACTIVE",
+      "conviction": "High",
+      "confidenceScorePct": 88,
+      "timeHorizon": "3-6 Months",
+      "generatedAt": "2026-09-09T11:45:00Z",
+      "headline": "Ro Khanna Buys PLTR Concurrent With House Cyber Subcommittee Classified Briefing",
+      "thesis": "Rep. Ro Khanna (Cyber & Innovative Technologies Subcommittee ranking member) disclosed a $100k-$250k stake in Palantir. This immediately followed the DOD announcement of tactical edge cloud expansion contracts where Palantir was selected as the sovereign intelligence data pipeline layer. The alignment of committee role and procurement acceleration indicates sustained multi-year backlog growth.",
+      "aiModel": "Nemotron-4-340B-Reward",
+      "evidence": {
+        "disclosures": [
+          {
+            "disclosureId": "disc-2026-005",
+            "politicianName": "Ro Khanna",
+            "transactionType": "BUY",
+            "transactionDate": "2026-08-12",
+            "amountBracket": "$100,001 - $250,000",
+            "committeeContext": "House Armed Services Subcommittee on Cyber, Innovative Technologies, and Information Systems"
+          }
+        ],
+        "newsCatalysts": [
+          {
+            "newsId": "news-2026-103",
+            "headline": "Pentagon Expands Sovereign AI Cloud Deployment; Palantir and Microsoft Chosen for Tactical Edge Nodes",
+            "source": "Bloomberg",
+            "publishedAt": "2026-08-16T16:45:00Z",
+            "relevanceNote": "Confirms Palantir AIP integration into combatant command workflows."
+          }
+        ],
+        "legislativeHooks": [
+          "DOD Joint All-Domain Command and Control (JADC2) Milestone C Transition",
+          "Cyber Information Sharing Act Compliance Standard revision"
+        ]
+      },
+      "keyRisks": [
+        "High price-to-sales multiple creates sensitivity to quarterly government revenue lumpiness",
+        "Integration timing delays with legacy service-branch hardware architectures"
+      ],
+      "metrics": {
+        "entryPrice": 32.1,
+        "currentPrice": 37.4,
+        "targetPrice": 45.0,
+        "stopLossPrice": 29.5,
+        "returnSinceSignalPct": 16.51,
+        "benchmarkReturnPct": 2.1
+      },
+      "tags": ["Defense AI", "Cybersecurity", "House Armed Services", "JADC2"]
+    },
+    {
+      "id": "sig-2026-004",
+      "ticker": "ASML",
+      "companyName": "ASML Holding NV",
+      "sector": "Semiconductors & AI",
+      "direction": "BEARISH",
+      "status": "ACTIVE",
+      "conviction": "Medium",
+      "confidenceScorePct": 83,
+      "timeHorizon": "1-3 Months",
+      "generatedAt": "2026-08-30T14:20:00Z",
+      "headline": "House Foreign Affairs Chair Sells ASML Ahead of Stricter Multilateral Lithography Export Sanctions",
+      "thesis": "Rep. Michael McCaul (Chair, House Foreign Affairs Committee) disclosed a substantial $500k-$1M divestment in ASML. McCaul's committee holds direct jurisdiction over export enforcement reviews and State Department sanctions coordination. Four days after the sale, committee staff circulated drafts to expand extraterritorial restrictions on maintenance contracts for installed EUV/DUV equipment in restricted territories.",
+      "aiModel": "Nemotron-Custom-Finance",
+      "evidence": {
+        "disclosures": [
+          {
+            "disclosureId": "disc-2026-011",
+            "politicianName": "Michael McCaul",
+            "transactionType": "SELL",
+            "transactionDate": "2026-08-08",
+            "amountBracket": "$500,001 - $1,000,000",
+            "committeeContext": "House Committee on Foreign Affairs (Direct oversight over BIS and multilateral export control agreements)"
+          }
+        ],
+        "newsCatalysts": [
+          {
+            "newsId": "news-2026-104",
+            "headline": "House Foreign Affairs Committee Previews Tighter Sanctions on Semiconductor Lithography Export Waivers",
+            "source": "Politico Pro",
+            "publishedAt": "2026-08-12T11:20:00Z",
+            "relevanceNote": "Points to direct loss of high-margin servicing and consumables revenue in non-allied jurisdictions."
+          }
+        ],
+        "legislativeHooks": [
+          "Export Control Reform Act (ECRA) Sec. 1758 Emerging and Foundational Technologies Review",
+          "Wassenaar Arrangement multilateral consensus harmonization memo"
+        ]
+      },
+      "keyRisks": [
+        "Accelerated EU and domestic US fab orders could offset international revenue headwinds",
+        "Potential diplomatic pushback from Netherlands government safeguarding domestic champions"
+      ],
+      "metrics": {
+        "entryPrice": 875.0,
+        "currentPrice": 812.0,
+        "targetPrice": 740.0,
+        "stopLossPrice": 915.0,
+        "returnSinceSignalPct": 7.2,
+        "benchmarkReturnPct": -1.1
+      },
+      "tags": ["Export Controls", "Foreign Affairs", "Semiconductor Equipment", "Bearish Signal"]
+    },
+    {
+      "id": "sig-2026-005",
+      "ticker": "CRWD",
+      "companyName": "CrowdStrike Holdings Inc.",
+      "sector": "Cybersecurity & Tech",
+      "direction": "BULLISH",
+      "status": "RESOLVED_PROFIT",
+      "conviction": "High",
+      "confidenceScorePct": 89,
+      "timeHorizon": "1-3 Months",
+      "generatedAt": "2026-07-29T16:00:00Z",
+      "headline": "Rapid 9-Day Disclosure on CRWD Dip by Intelligence Committee Member Ahead of CISA Mandate",
+      "thesis": "Rep. Dan Crenshaw disclosed a $50k-$100k purchase in CrowdStrike within an extraordinarily brief 9-day window (versus the congressional average of 34 days). The buy captured the maximum fear trough following a global software update glitch. Intelligence and Homeland Security committee insights into CISA's forthcoming binding operational directive validated that CrowdStrike's federal zero-trust architecture had no viable commercial substitute for federal networks.",
+      "aiModel": "Nemotron-4-340B-Reward",
+      "evidence": {
+        "disclosures": [
+          {
+            "disclosureId": "disc-2026-007",
+            "politicianName": "Dan Crenshaw",
+            "transactionType": "BUY",
+            "transactionDate": "2026-07-19",
+            "amountBracket": "$50,001 - $100,000",
+            "committeeContext": "Permanent Select Committee on Intelligence / Energy & Commerce"
+          }
+        ],
+        "newsCatalysts": [
+          {
+            "newsId": "news-2026-105",
+            "headline": "CISA Releases Mandatory Federal Zero-Trust Endpoint Directives Ahead of Q4 Deadline",
+            "source": "CyberScoop",
+            "publishedAt": "2026-07-24T13:10:00Z",
+            "relevanceNote": "Reaffirmed agency dependencies on falcon platform telemetry for threat feed synthesis."
+          }
+        ],
+        "legislativeHooks": [
+          "Executive Order 14028 (Improving the Nation's Cybersecurity) Endpoint Detection Compliance",
+          "CISA Binding Operational Directive 23-01 Verification"
+        ]
+      },
+      "keyRisks": [
+        "Litigation exposure from enterprise SLAs disrupted during outages",
+        "Short-term discounting pressure from competitors during Q3 renewal cycles"
+      ],
+      "metrics": {
+        "entryPrice": 242.0,
+        "currentPrice": 298.5,
+        "targetPrice": 295.0,
+        "stopLossPrice": 220.0,
+        "returnSinceSignalPct": 23.35,
+        "benchmarkReturnPct": 4.2
+      },
+      "tags": ["Dip Buying", "Cybersecurity", "Fast Disclosure Lag", "Resolved Profit"]
+    }
+  ]
+}

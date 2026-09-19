@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Trade Signal"
+description = "A political trade intelligence dashboard that combines public disclosure data with RSS news and Nemotron-generated analysis to surface readable, source-linked trade signals."
+version = "1.0.0"
+id = "artifacts/trade-signal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25842
+
+[services.development]
+run = "pnpm --filter @workspace/trade-signal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trade-signal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/trade-signal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25842"
+BASE_PATH = "/"

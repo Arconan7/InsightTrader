@@ -1,6 +1,6 @@
 {
   "$schema": "insighttrader-dataset-v2-live",
-  "generatedAt": "2026-09-19T19:00:48.820Z",
+  "generatedAt": "2026-09-19T19:02:40.874Z",
   "summary": {
     "activeSignalsCount": 5,
     "avgConfidenceScorePct": 90,
@@ -10,7 +10,7 @@
     "totalDisclosuresCount": 5,
     "trackedPoliticiansCount": 7,
     "officialPtrFilingsCataloged": 379,
-    "lastUpdatedIso": "2026-09-19T19:00:48.820Z",
+    "lastUpdatedIso": "2026-09-19T19:02:40.874Z",
     "dataSourceMode": "LIVE_PUBLIC_FEEDS",
     "dataSources": [
       "U.S. House of Representatives Clerk (disclosures-clerk.house.gov)",
@@ -591,9 +591,9 @@
       "conviction": "High",
       "confidenceScorePct": 93,
       "timeHorizon": "3-6 Months",
-      "generatedAt": "2026-09-19T19:00:48.817Z",
+      "generatedAt": "2026-09-19T19:02:40.870Z",
       "headline": "Nancy Pelosi Discloses Significant NVDA Position Ahead of Key Policy & Procurement Markups",
-      "thesis": "Signal Direction: BULLISH (93% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #20033725]: Nancy Pelosi reported a BUY position ($1,000,001 - $5,000,000) on 2026-06-18, disclosed under the STOCK Act on 1/23/2026.\n2. Public Market Catalyst [Source: Yahoo Finance (NVDA) RSS]: \"Huang just doubled his chip forecast and blocked a regulator\". Verified via public news wire.\n3. Legislative Alignment [Source: U.S. Congress (Official Law)]: Driven by authorizations in CHIPS and Science Act (Public Law 117-167).\n4. Valuation & Execution [Source: Live Exchange Tape]: Ticker is currently quoting at $222.27. Risk/reward target modeled at $271.17 against stop loss at $195.6. All claims are linked to public primary sources below.",
+      "thesis": "Signal Direction: BULLISH (93% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #20033725]: Nancy Pelosi reported a BUY position ($1,000,001 - $5,000,000) on 2026-06-18, disclosed under the STOCK Act on 1/23/2026.\n2. Public Market Catalyst [Source: Yahoo Finance (NVDA) RSS]: \"Forget Buying All Seven: The \"Magnificent Seven\" Stock Most Likely to Double by 2028\". Verified via public news wire.\n3. Legislative Alignment [Source: U.S. Congress (Official Law)]: Driven by authorizations in CHIPS and Science Act (Public Law 117-167).\n4. Valuation & Execution [Source: Live Exchange Tape]: Ticker is currently quoting at $222.27. Risk/reward target modeled at $271.17 against stop loss at $195.6. All claims are linked to public primary sources below.",
       "aiModel": "Nemotron-4-340B-Reward",
       "evidence": {
         "disclosures": [
@@ -610,6 +610,14 @@
         "newsCatalysts": [
           {
             "newsId": "news-aHR0cHM6Ly93d3cu",
+            "headline": "Forget Buying All Seven: The \"Magnificent Seven\" Stock Most Likely to Double by 2028",
+            "source": "Yahoo Finance (NVDA)",
+            "publishedAt": "2026-09-19T18:50:00.000Z",
+            "articleUrl": "https://www.fool.com/investing/2026/09/19/forget-buying-all-seven-the-magnificent-seven-stoc/?.tsrc=rss",
+            "relevanceNote": "Correlated market catalyst tracking public reporting on NVDA developments and market reaction."
+          },
+          {
+            "newsId": "news-aHR0cHM6Ly93d3cu",
             "headline": "Huang just doubled his chip forecast and blocked a regulator",
             "source": "Yahoo Finance (NVDA)",
             "publishedAt": "2026-09-19T17:07:00.000Z",
@@ -622,14 +630,6 @@
             "source": "Yahoo Finance (NVDA)",
             "publishedAt": "2026-09-19T17:05:00.000Z",
             "articleUrl": "https://www.fool.com/investing/2026/09/19/prediction-this-nvidia-backed-artificial-intellige/?.tsrc=rss",
-            "relevanceNote": "Correlated market catalyst tracking public reporting on NVDA developments and market reaction."
-          },
-          {
-            "newsId": "news-aHR0cHM6Ly93d3cu",
-            "headline": "From Hustle to Hypervigilance: Is Fear of Running Out of Money Stealing Your Retirement Joy?",
-            "source": "Yahoo Finance (NVDA)",
-            "publishedAt": "2026-09-19T16:50:00.000Z",
-            "articleUrl": "https://www.fool.com/investing/2026/09/19/from-hustle-to-hypervigilance-is-fear-of-running/?.tsrc=rss",
             "relevanceNote": "Correlated market catalyst tracking public reporting on NVDA developments and market reaction."
           }
         ],
@@ -660,6 +660,15 @@
         },
         {
           "id": "cite-news-news-aHR0cHM6Ly93d3cu",
+          "claim": "Public financial wire report: \"Forget Buying All Seven: The \"Magnificent Seven\" Stock Most Likely to Double by 2028\"",
+          "sourceType": "Financial Press",
+          "sourceName": "Yahoo Finance (NVDA) RSS Feed",
+          "sourceUrl": "https://www.fool.com/investing/2026/09/19/forget-buying-all-seven-the-magnificent-seven-stoc/?.tsrc=rss",
+          "verifiedDate": "2026-09-19",
+          "badgeText": "Public RSS Article"
+        },
+        {
+          "id": "cite-news-news-aHR0cHM6Ly93d3cu",
           "claim": "Public financial wire report: \"Huang just doubled his chip forecast and blocked a regulator\"",
           "sourceType": "Financial Press",
           "sourceName": "Yahoo Finance (NVDA) RSS Feed",
@@ -673,15 +682,6 @@
           "sourceType": "Financial Press",
           "sourceName": "Yahoo Finance (NVDA) RSS Feed",
           "sourceUrl": "https://www.fool.com/investing/2026/09/19/prediction-this-nvidia-backed-artificial-intellige/?.tsrc=rss",
-          "verifiedDate": "2026-09-19",
-          "badgeText": "Public RSS Article"
-        },
-        {
-          "id": "cite-news-news-aHR0cHM6Ly93d3cu",
-          "claim": "Public financial wire report: \"From Hustle to Hypervigilance: Is Fear of Running Out of Money Stealing Your Retirement Joy?\"",
-          "sourceType": "Financial Press",
-          "sourceName": "Yahoo Finance (NVDA) RSS Feed",
-          "sourceUrl": "https://www.fool.com/investing/2026/09/19/from-hustle-to-hypervigilance-is-fear-of-running/?.tsrc=rss",
           "verifiedDate": "2026-09-19",
           "badgeText": "Public RSS Article"
         },
@@ -744,7 +744,7 @@
       "conviction": "High",
       "confidenceScorePct": 89,
       "timeHorizon": "3-6 Months",
-      "generatedAt": "2026-09-19T19:00:48.818Z",
+      "generatedAt": "2026-09-19T19:02:40.871Z",
       "headline": "Ro Khanna Discloses Significant PLTR Position Ahead of Key Policy & Procurement Markups",
       "thesis": "Signal Direction: BULLISH (89% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #8221322]: Ro Khanna reported a BUY position ($100,001 - $250,000) on 2026-02-18, disclosed under the STOCK Act on 2/6/2026.\n2. Public Market Catalyst [Source: Yahoo Finance (PLTR) RSS]: \"What Will $5,000 Invested in Palantir Stock Be Worth in 5 Years?\". Verified via public news wire.\n3. Legislative Alignment [Source: Department of Defense Enterprise Architecture]: Driven by authorizations in DOD Combined Joint All-Domain Command and Control (CJADC2).\n4. Valuation & Execution [Source: Live Exchange Tape]: Ticker is currently quoting at $177.64. Risk/reward target modeled at $216.72 against stop loss at $156.32. All claims are linked to public primary sources below.",
       "aiModel": "Nemotron-4-340B-Reward",
@@ -897,7 +897,7 @@
       "conviction": "Medium",
       "confidenceScorePct": 84,
       "timeHorizon": "3-6 Months",
-      "generatedAt": "2026-09-19T19:00:48.819Z",
+      "generatedAt": "2026-09-19T19:02:40.872Z",
       "headline": "Michael McCaul Divests ASML Position Amid Expanding Export & Regulatory Scrutiny",
       "thesis": "Signal Direction: BEARISH (84% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #8221326]: Michael McCaul disclosed a SELL divestment ($250,001 - $500,000) on 2026-02-14.\n2. Public Market Catalyst [Source: Yahoo Finance (ASML) RSS]: \"KLAC Gains From AI Infrastructure: Can It Outpace AMAT & ASML?\". Correlates with policy headwinds and regulatory actions.\n3. Legislative Oversight [Source: U.S. Department of Commerce (BIS)]: Subject to restrictions under Bureau of Industry and Security Advanced Lithography Controls.\n4. Valuation & Execution [Source: Live Exchange Tape]: Trading at $1679.92, with downside objective at $1377.53 and stop protection at $1881.51. View direct filing and news links below to verify.",
       "aiModel": "Nemotron-4-340B-Reward",
@@ -1050,7 +1050,7 @@
       "conviction": "High",
       "confidenceScorePct": 90,
       "timeHorizon": "1-3 Months",
-      "generatedAt": "2026-09-19T19:00:48.820Z",
+      "generatedAt": "2026-09-19T19:02:40.873Z",
       "headline": "Josh Gottheimer Discloses Significant CRWD Position Ahead of Key Policy & Procurement Markups",
       "thesis": "Signal Direction: BULLISH (90% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #20033756]: Josh Gottheimer reported a BUY position ($100,001 - $250,000) on 2026-02-12, disclosed under the STOCK Act on 1/14/2026.\n2. Public Market Catalyst [Source: Yahoo Finance (CRWD) RSS]: \"CrowdStrike CEO sends strong six-word message on AI cyber safety\". Verified via public news wire.\n3. Legislative Alignment [Source: Cybersecurity & Infrastructure Security Agency (CISA)]: Driven by authorizations in CISA Binding Operational Directive 23-02 Infrastructure Timeline.\n4. Valuation & Execution [Source: Live Exchange Tape]: Ticker is currently quoting at $237.65. Risk/reward target modeled at $289.93 against stop loss at $209.13. All claims are linked to public primary sources below.",
       "aiModel": "Nemotron-4-340B-Reward",
@@ -1203,7 +1203,7 @@
       "conviction": "High",
       "confidenceScorePct": 94,
       "timeHorizon": "6-12 Months",
-      "generatedAt": "2026-09-19T19:00:48.820Z",
+      "generatedAt": "2026-09-19T19:02:40.874Z",
       "headline": "Tommy Tuberville Discloses Significant LMT Position Ahead of Key Policy & Procurement Markups",
       "thesis": "Signal Direction: BULLISH (94% Conviction).\n\nFact-Check Basis:\n1. Congressional Disclosure [Source: Official House Clerk Document #lmt]: Tommy Tuberville reported a BUY position ($100,001 - $250,000) on 2026-08-04, disclosed under the STOCK Act on 2026-09-02.\n2. Public Market Catalyst [Source: Yahoo Finance (LMT) RSS]: \"Lockheed Martin (LMT) Marks First Saudi F 35 Push And Germany F 35A Rollout\". Verified via public news wire.\n3. Legislative Alignment [Source: Congress.gov Legislative Search]: Driven by authorizations in National Defense Authorization Act (NDAA Title I Procurement).\n4. Valuation & Execution [Source: Live Exchange Tape]: Ticker is currently quoting at $533.38. Risk/reward target modeled at $650.72 against stop loss at $469.37. All claims are linked to public primary sources below.",
       "aiModel": "Nemotron-4-340B-Reward",

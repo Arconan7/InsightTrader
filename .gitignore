@@ -47,3 +47,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Data ingestion downloads and temporary cache
+data/downloads/
+data/cache/

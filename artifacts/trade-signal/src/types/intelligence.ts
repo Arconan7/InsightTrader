@@ -64,6 +64,16 @@ export type SignalStatus = 'ACTIVE' | 'RESOLVED_PROFIT' | 'RESOLVED_LOSS' | 'EXP
 export type TimeHorizon = '1-3 Months' | '3-6 Months' | '6-12 Months';
 export type ConvictionLevel = 'High' | 'Medium' | 'Speculative';
 
+export interface Citation {
+  id: string;
+  claim: string;
+  sourceType: 'Government Filing' | 'Financial Press' | 'Legislative Record' | 'Exchange Tape';
+  sourceName: string;
+  sourceUrl: string;
+  verifiedDate: string;
+  badgeText: string;
+}
+
 export interface SignalEvidence {
   disclosures: Array<{
     disclosureId: string;
@@ -72,6 +82,7 @@ export interface SignalEvidence {
     transactionDate: string;
     amountBracket: string;
     committeeContext: string;
+    filingDocUrl?: string;
   }>;
   newsCatalysts: Array<{
     newsId: string;
@@ -79,6 +90,7 @@ export interface SignalEvidence {
     source: string;
     publishedAt: string;
     relevanceNote: string;
+    articleUrl?: string;
   }>;
   legislativeHooks: string[];
 }
@@ -107,6 +119,7 @@ export interface TradeSignal {
   thesis: string;
   aiModel: 'Nemotron-70B-Instruct' | 'Nemotron-4-340B-Reward' | 'Nemotron-Custom-Finance';
   evidence: SignalEvidence;
+  citations?: Citation[];
   keyRisks: string[];
   metrics: SignalPriceMetrics;
   tags: string[];

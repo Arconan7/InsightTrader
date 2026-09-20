@@ -8,6 +8,9 @@ export interface Politician {
   party: PoliticalParty;
   state: string;
   district?: string;
+  bioguideId?: string;
+  bioguideUrl?: string | null;
+  source?: string;
   committees: string[];
   avatarUrl: string;
   totalTradesTracked: number;
@@ -64,10 +67,51 @@ export type SignalStatus = 'ACTIVE' | 'RESOLVED_PROFIT' | 'RESOLVED_LOSS' | 'EXP
 export type TimeHorizon = '1-3 Months' | '3-6 Months' | '6-12 Months';
 export type ConvictionLevel = 'High' | 'Medium' | 'Speculative';
 
+export type VerdictAction = 'BUY' | 'HOLD' | 'SELL';
+
+export interface VerdictPillar {
+  name: string;
+  weightPct: number;
+  score: number;
+  status: string;
+  summary: string;
+  sources: Array<{ name: string; url: string }>;
+}
+
+export interface VerdictModel {
+  action: VerdictAction;
+  confidenceScorePct: number;
+  rationale: string;
+  compositeScore: number;
+  calculationMethod: string;
+  pillars: VerdictPillar[];
+}
+
+export interface TrumpPost {
+  id: string;
+  author: string;
+  handle: string;
+  platform: string;
+  postUrl: string;
+  publishedAt: string;
+  content: string;
+  matchedTickers: string[];
+  topic: string;
+  sentiment: 'Bullish' | 'Bearish' | 'Neutral';
+  sourceVerification: string;
+  verified: boolean;
+}
+
+export interface TrackedTickersState {
+  coreTickers: string[];
+  userTickers: string[];
+  allTickers: string[];
+}
+
 export interface Citation {
   id: string;
   claim: string;
-  sourceType: 'Government Filing' | 'Financial Press' | 'Legislative Record' | 'Exchange Tape';
+  sourceType: 'Government Filing' | 'Financial Press' | 'Legislative Record' | 'Exchange Tape' | 'Public Statement';
   sourceName: string;
   sourceUrl: string;
   verifiedDate: string;
@@ -92,12 +136,13 @@ export interface SignalEvidence {
     relevanceNote: string;
     articleUrl?: string;
   }>;
+  trumpPosts?: TrumpPost[];
   legislativeHooks: string[];
 }
 
 export interface SignalPriceMetrics {
   entryPrice: number;
-  currentPrice: number;
+  currentPrice: number | null;
   targetPrice: number;
   stopLossPrice: number;
   returnSinceSignalPct: number;
@@ -110,6 +155,7 @@ export interface TradeSignal {
   companyName: string;
   sector: string;
   direction: SignalDirection;
+  verdict?: VerdictModel;
   status: SignalStatus;
   conviction: ConvictionLevel;
   confidenceScorePct: number; // 0-100
@@ -152,11 +198,14 @@ export interface DashboardSummary {
   activeSignalsCount: number;
   avgConfidenceScorePct: number;
   totalTrackedVolumeYtdUsd: number;
-  signalWinRatePct: number;
-  avgSignalAlphaPct: number;
+  signalWinRatePct?: number;
+  avgSignalAlphaPct?: number;
   totalDisclosuresCount: number;
   trackedPoliticiansCount: number;
+  officialPtrFilingsCataloged?: number;
   lastUpdatedIso: string;
+  dataSourceMode?: string;
+  dataSources?: string[];
 }
 
 export interface InsightDataset {
@@ -166,5 +215,7 @@ export interface InsightDataset {
   politicians: Politician[];
   news: NewsArticle[];
   quotes: StockQuote[];
+  trumpPosts?: TrumpPost[];
+  trackedTickers?: TrackedTickersState;
 }
 

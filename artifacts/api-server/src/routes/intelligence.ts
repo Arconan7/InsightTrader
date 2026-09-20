@@ -53,9 +53,9 @@ router.get("/status", (_req: Request, res: Response) => {
 router.post("/refresh", async (_req: Request, res: Response) => {
   try {
     // Dynamically import live service if in Node runtime
-    const { refreshLiveIntelligence } = await import(
+    const { refreshLiveIntelligence } = (await import(
       "../../../../lib/data-feed/live-intelligence-service.mjs"
-    );
+    )) as any;
     const fresh = await refreshLiveIntelligence();
     res.json(fresh);
   } catch (err: any) {
@@ -85,7 +85,7 @@ router.get("/signals", (req: Request, res: Response) => {
 // GET /api/signals/:id
 router.get("/signals/:id", (req: Request, res: Response) => {
   const dataset = getDataset();
-  const { id } = req.params;
+  const id = String(req.params.id);
   const signal = dataset.signals.find(
     (s: any) => s.id === id || s.ticker.toUpperCase() === id.toUpperCase()
   );

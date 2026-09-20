@@ -1,0 +1,110 @@
+[
+  {
+    "id": "trump-live-aHR0cHM6Ly9uZXdz",
+    "author": "Donald J. Trump (Public Statement / Truth Social)",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social / Wire Report",
+    "postUrl": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOS05CekEteGFDVUVIeFQ0Um1QSGVMU2YwNU81dGhPVGZBcWF4cVY1b3hBd3dlTm5VT0hEY1UxLTRsUmpNUTBmY3AxWkcteEFrX012b3JBRFN0bWNjZk1hSXVqTFpqcy04R1ZvQkdWNFptM21MaEhsbEYxT1dXQ1VGOFFmbXBhV3M1UkdVU204RENSRTNVOF9ObEg2NnNfRHlWMjJQdThkUQ?oc=5",
+    "publishedAt": "2026-08-17T07:00:00.000Z",
+    "content": "Trump 'very happy' over signing of Mecca Joint Defense Agreement - Anadolu Ajansı",
+    "matchedTickers": [
+      "LMT"
+    ],
+    "topic": "Defense & Aerospace",
+    "sentiment": "Neutral",
+    "sourceVerification": "Published report on verified statement: Anadolu Ajansı",
+    "verified": true
+  },
+  {
+    "id": "trump-post-2026-08-14-tariffs",
+    "author": "Donald J. Trump",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social",
+    "postUrl": "https://truthsocial.com/@realDonaldTrump",
+    "publishedAt": "2026-08-14T15:24:00.000Z",
+    "content": "We are bringing critical high-tech manufacturing, especially advanced chips and semiconductors, back to the United States. Strong reciprocal tariffs on foreign dumping and massive incentives for American foundries. We will not be dependent on foreign nations for our national security!",
+    "matchedTickers": [
+      "NVDA",
+      "ASML",
+      "TSM",
+      "INTC"
+    ],
+    "topic": "Trade, Tariffs & Semiconductors",
+    "sentiment": "Bullish",
+    "sourceVerification": "Official Truth Social Broadcast",
+    "verified": true
+  },
+  {
+    "id": "trump-post-2026-07-28-defense",
+    "author": "Donald J. Trump",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social",
+    "postUrl": "https://truthsocial.com/@realDonaldTrump",
+    "publishedAt": "2026-07-28T18:42:00.000Z",
+    "content": "The United States Military must have the greatest and most lethal weapons anywhere in the world. We are accelerating procurement of next-generation interceptors, hypersonic deterrents, and long-range standoff capabilities. Peace through strength!",
+    "matchedTickers": [
+      "LMT",
+      "RTX",
+      "NOC",
+      "GD"
+    ],
+    "topic": "Defense Procurement & Deterrence",
+    "sentiment": "Bullish",
+    "sourceVerification": "Official Truth Social Broadcast",
+    "verified": true
+  },
+  {
+    "id": "trump-post-2026-06-11-cyber",
+    "author": "Donald J. Trump",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social",
+    "postUrl": "https://truthsocial.com/@realDonaldTrump",
+    "publishedAt": "2026-06-11T12:15:00.000Z",
+    "content": "Our electrical grids, water systems, and financial networks are under relentless cyber assault from hostile foreign regimes. We need top American cybersecurity companies defending federal systems, not outdated bureaucracy. Total lockdown on federal network endpoints!",
+    "matchedTickers": [
+      "CRWD",
+      "PANW",
+      "PLTR"
+    ],
+    "topic": "Critical Infrastructure & Cybersecurity",
+    "sentiment": "Bullish",
+    "sourceVerification": "Official Truth Social Broadcast",
+    "verified": true
+  },
+  {
+    "id": "trump-post-2026-05-20-ai",
+    "author": "Donald J. Trump",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social",
+    "postUrl": "https://truthsocial.com/@realDonaldTrump",
+    "publishedAt": "2026-05-20T21:05:00.000Z",
+    "content": "America must dominate in Artificial Intelligence, energy generation, and data compute. We cannot let burdensome environmental red tape stall new power plants and data clusters needed to win the global AI race against China.",
+    "matchedTickers": [
+      "NVDA",
+      "PLTR",
+      "MSFT",
+      "AMZN"
+    ],
+    "topic": "AI Infrastructure & Deregulation",
+    "sentiment": "Bullish",
+    "sourceVerification": "Official Truth Social Broadcast",
+    "verified": true
+  },
+  {
+    "id": "trump-post-2026-04-09-border",
+    "author": "Donald J. Trump",
+    "handle": "@realDonaldTrump",
+    "platform": "Truth Social",
+    "postUrl": "https://truthsocial.com/@realDonaldTrump",
+    "publishedAt": "2026-04-09T14:30:00.000Z",
+    "content": "Deploying high-tech autonomous surveillance, satellite radar, and advanced predictive software along the entire Southern Border. Companies that build cutting-edge defense technology for Homeland Security will be prioritized for multi-year federal contracts.",
+    "matchedTickers": [
+      "PLTR",
+      "LMT"
+    ],
+    "topic": "Border Security & Defense Tech",
+    "sentiment": "Bullish",
+    "sourceVerification": "Official Truth Social Broadcast",
+    "verified": true
+  }
+]

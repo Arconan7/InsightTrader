@@ -5,7 +5,14 @@ import {
   getIntelligence,
   refreshLiveIntelligence,
   getSyncStatus,
+  getTrackedTickers,
+  addUserTrackedTicker,
+  removeUserTrackedTicker,
+  CORE_TICKERS,
 } from './lib/data-feed/live-intelligence-service.mjs';
+import { loadTrumpPosts, getTrumpPostsForTicker } from './lib/data-feed/trump-tracker.mjs';
+import { isLanxess, sanitizeDataset } from './lib/data-feed/lanxess-filter.mjs';
+import { getInitialsAvatar } from './lib/data-feed/congress-feed.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,21 +20,46 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = '0.0.0.0';
 
-// Helper to send JSON responses
+// Helper to send JSON responses with Lanxess exclusion
 function sendJson(res, statusCode, data) {
-  const jsonStr = JSON.stringify(data, null, 2);
+  const sanitized = sanitizeDataset(data);
+  const jsonStr = JSON.stringify(sanitized, null, 2);
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   });
   res.end(jsonStr);
 }
 
+// Helper to parse JSON request bodies
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1e6) {
+        req.destroy();
+        reject(new Error('Payload too large'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 // Generate the standalone web dashboard HTML with transparent fact-checking audit trails
 function getDashboardHtml() {
-  const dataset = getIntelligence();
+  const rawDataset = getIntelligence();
+  const dataset = sanitizeDataset(rawDataset);
+  const tracked = getTrackedTickers();
 
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -93,7 +125,7 @@ function getDashboardHtml() {
     <div class="flex items-center gap-2 text-emerald-300">
       <svg class="h-4 w-4 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <span>
-        <strong>Complete Source Transparency:</strong> Every claim, trade, and price target is backed by verifiable primary sources: official U.S. House Clerk PDFs (<a href="https://disclosures-clerk.house.gov" target="_blank" class="underline hover:text-white">disclosures-clerk.house.gov</a>), live RSS wires (Yahoo/Google News), Congress.gov legislative acts, and real-time exchange pricing.
+        <strong>Complete Source Traceability:</strong> Every verdict, trade, and price target is backed by verifiable primary sources: official U.S. House Clerk PDFs (<a href="https://disclosures-clerk.house.gov" target="_blank" rel="noopener noreferrer" class="underline hover:text-white">disclosures-clerk.house.gov</a>), live RSS wires (Yahoo/Google News), Congress.gov legislative acts, official Bioguide legislator records, and real-time exchange pricing.
       </span>
     </div>
     <div class="text-slate-400 font-mono text-[11px]" id="last-sync-time">
@@ -108,7 +140,7 @@ function getDashboardHtml() {
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-grid">
       <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Signals</p>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Signals & Verdicts</p>
           <h4 class="text-2xl font-bold text-white mt-1" id="kpi-active">${dataset.summary.activeSignalsCount || 5}</h4>
           <span class="text-[11px] text-emerald-400 font-medium">100% Fact-Checked</span>
         </div>
@@ -119,9 +151,9 @@ function getDashboardHtml() {
 
       <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
         <div>
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Simulated Win Rate</p>
-          <h4 class="text-2xl font-bold text-white mt-1" id="kpi-winrate">${dataset.summary.signalWinRatePct || 78.6}%</h4>
-          <span class="text-[11px] text-emerald-400 font-medium">+${dataset.summary.avgSignalAlphaPct || 12.8}% vs S&P 500</span>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tracked Stocks</p>
+          <h4 class="text-2xl font-bold text-white mt-1" id="kpi-tracked">${dataset.summary.trackedTickersCount || tracked.allTickers.length}</h4>
+          <span class="text-[11px] text-blue-400 font-medium" id="kpi-core-user">${CORE_TICKERS.length} Core · ${tracked.userTickers.length} User-Added</span>
         </div>
         <div class="p-3 bg-blue-950/40 border border-blue-800/40 rounded-xl text-blue-400">
           <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
@@ -151,24 +183,66 @@ function getDashboardHtml() {
       </div>
     </div>
 
+    <!-- User Stock Management & Watchlist Control -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Tracked Stocks Portfolio
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Add any stock ticker for real-time Yahoo Finance quote tape, RSS wire correlation, and BUY/HOLD/SELL verdict.
+          </p>
+        </div>
+
+        <!-- Add Stock Form -->
+        <form id="add-stock-form" onsubmit="handleAddStock(event)" class="flex items-center gap-2">
+          <input
+            type="text"
+            id="ticker-input"
+            placeholder="Enter ticker (e.g. AAPL, TSLA)..."
+            maxlength="10"
+            class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white uppercase placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 w-44 sm:w-56 font-mono"
+            required
+          />
+          <button
+            type="submit"
+            id="add-stock-btn"
+            class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span id="add-stock-btn-text">Add Stock</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Add Stock Feedback Alert -->
+      <div id="ticker-feedback" class="hidden text-xs px-3 py-2 rounded-lg border"></div>
+
+      <!-- Tracked Stock Chips -->
+      <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800" id="tracked-chips-container">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
     <!-- Main Workspace Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      <!-- Left Column: Signal Stream (7 cols) -->
+      <!-- Left Column: Signal & Verdict Stream (7 cols) -->
       <section class="lg:col-span-7 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 class="text-base font-bold text-white flex items-center gap-2">
             <svg class="h-5 w-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Synthesized Live Trade Signals
+            Tracked Stocks & Overall Verdicts
           </h2>
 
           <div class="flex items-center gap-2">
-            <input type="text" id="search-input" placeholder="Search ticker or thesis..." class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+            <input type="text" id="search-input" placeholder="Search ticker or company..." class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
             <select id="direction-filter" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
-              <option value="ALL">All Directions</option>
-              <option value="BULLISH">Bullish</option>
-              <option value="BEARISH">Bearish</option>
-              <option value="WATCH">Watch</option>
+              <option value="ALL">All Verdicts</option>
+              <option value="BUY">BUY</option>
+              <option value="HOLD">HOLD</option>
+              <option value="SELL">SELL</option>
             </select>
           </div>
         </div>
@@ -195,33 +269,50 @@ function getDashboardHtml() {
           <div class="p-5 space-y-5">
             <div>
               <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-white" id="briefing-title">Select a signal</h3>
-                <span id="briefing-price-tag" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400"></span>
+                <h3 class="text-base font-bold text-white" id="briefing-title">Select a stock</h3>
+                <a id="briefing-price-tag" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1"></a>
               </div>
               <p class="text-xs text-slate-400 mt-1" id="briefing-headline"></p>
             </div>
 
-            <!-- AI Investment Thesis -->
-            <div>
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-                <span>Investment Thesis & Fact-Check Basis</span>
-                <span class="text-[10px] text-emerald-400 font-normal">Audited Claims</span>
-              </h4>
-              <div class="text-xs leading-relaxed text-slate-300 bg-slate-950 p-3.5 rounded-lg border border-slate-800/80 space-y-2" id="briefing-thesis"></div>
+            <!-- OVERALL VERDICT SUMMARY & RATIONALE -->
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3" id="briefing-verdict-box">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Overall Verdict:</span>
+                  <span id="briefing-verdict-badge" class="px-2.5 py-0.5 rounded text-xs font-black"></span>
+                </div>
+                <span id="briefing-confidence" class="text-xs font-mono text-slate-400"></span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed" id="briefing-verdict-rationale"></p>
             </div>
 
-            <!-- DEDICATED FACT-CHECK AUDIT TRAIL -->
+            <!-- TRANSPARENT MULTI-PILLAR DERIVATION -->
             <div class="p-3.5 rounded-lg bg-slate-950/90 border border-emerald-900/40 space-y-3">
               <div class="flex items-center justify-between">
                 <h4 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                   <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Fact-Check Audit Trail (Primary Sources)
+                  Verdict Evidentiary Derivation & Weights
                 </h4>
-                <span class="text-[10px] text-slate-400">Click any link to independently verify</span>
+                <span class="text-[10px] text-slate-400">Mathematical Audit</span>
               </div>
-              <p class="text-[11px] text-slate-400">
-                Every claim made above is cross-referenced with public documents. Verify below:
+              <p class="text-[11px] text-slate-400" id="briefing-calc-method">
+                Multi-pillar score derived from filings, market tape, news sentiment, and policy statements.
               </p>
+              <div id="briefing-pillars-container" class="space-y-2">
+                <!-- Dynamically populated pillars -->
+              </div>
+            </div>
+
+            <!-- DEDICATED FACT-CHECK AUDIT TRAIL -->
+            <div class="p-3.5 rounded-lg bg-slate-950/90 border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <svg class="h-4 w-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  Primary Source Audit Trail
+                </h4>
+                <span class="text-[10px] text-slate-400">Click to verify independently</span>
+              </div>
               <div id="briefing-citations" class="space-y-2">
                 <!-- Dynamically populated citations -->
               </div>
@@ -251,6 +342,18 @@ function getDashboardHtml() {
               <div id="briefing-news" class="space-y-2"></div>
             </div>
 
+            <!-- Donald Trump Statements & Policy Wire for this Stock -->
+            <div id="briefing-trump-section">
+              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Trump Social Media & Policy Context
+                </span>
+                <span class="text-[10px] text-rose-400/80">Low Weight (5%)</span>
+              </h4>
+              <div id="briefing-trump" class="space-y-2"></div>
+            </div>
+
             <!-- Legislative References -->
             <div id="briefing-hooks-section">
               <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
@@ -271,17 +374,37 @@ function getDashboardHtml() {
           </div>
         </div>
 
-        <!-- Congressional Trader Leaderboard -->
+        <!-- Congressional Trader Leaderboard with Verified Bioguide Photos -->
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
           <div class="p-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
             <h3 class="text-xs font-bold text-white flex items-center gap-2">
               <svg class="h-4 w-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Tracked Members of Congress
+              Tracked Members of Congress (Bioguide Verified)
             </h3>
             <span class="text-[11px] text-slate-400">STOCK Act Records</span>
           </div>
 
           <div class="divide-y divide-slate-800/80 p-3" id="politicians-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Donald Trump Public Social Media & Statement Wire -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+          <div class="p-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 bg-rose-950 text-rose-400 rounded-lg border border-rose-800/50">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </span>
+              <div>
+                <h3 class="text-xs font-bold text-white">Trump Public Social Media & Policy Wire</h3>
+                <p class="text-[10px] text-slate-400">Truth Social & Verified Statements (Low 5% Verdict Weight)</p>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono" id="trump-posts-count"></span>
+          </div>
+
+          <div class="divide-y divide-slate-800/80 p-3 max-h-96 overflow-y-auto custom-scrollbar" id="trump-posts-feed">
             <!-- Dynamically populated -->
           </div>
         </div>
@@ -312,28 +435,28 @@ function getDashboardHtml() {
         <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
           <strong class="text-emerald-400 block text-xs">1. Official Congressional STOCK Act Filings</strong>
           <p class="text-slate-400">
-            Downloaded directly from the <strong>U.S. House of Representatives Legislative Resource Center</strong> (<a href="https://disclosures-clerk.house.gov" target="_blank" class="text-blue-400 underline">disclosures-clerk.house.gov</a>) and Senate Financial Disclosures. Each filing is cited with its official government Document ID and a direct PDF download link.
+            Downloaded directly from the <strong>U.S. House of Representatives Legislative Resource Center</strong> (<a href="https://disclosures-clerk.house.gov" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">disclosures-clerk.house.gov</a>) and Senate Financial Disclosures. Each filing is cited with its official government Document ID and a direct PDF download link.
           </p>
         </div>
 
         <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
-          <strong class="text-emerald-400 block text-xs">2. Live News Feeds & Correlated Catalysts</strong>
+          <strong class="text-emerald-400 block text-xs">2. Verified Legislator Bioguide Metadata</strong>
           <p class="text-slate-400">
-            Ingested via live RSS from major financial publishers (Yahoo Finance RSS, Reuters, CNBC) and Google News RSS. We retain the original source publisher, article URL, and publication timestamp so users can open the exact original article with one click.
+            Official congressional photographs and committee assignments are linked to the authoritative Biographical Directory of the United States Congress (<a href="https://bioguide.congress.gov" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">bioguide.congress.gov</a>). No random or unsourced stock photos are ever used.
           </p>
         </div>
 
         <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
-          <strong class="text-emerald-400 block text-xs">3. Real-Time Market Exchange Tape</strong>
+          <strong class="text-emerald-400 block text-xs">3. Real-Time Market Exchange Tape & Formulas</strong>
           <p class="text-slate-400">
-            Current trading prices, 24-hour performance, and 52-week ranges are fetched via the Yahoo Finance market feed. Target prices and returns are calculated transparently relative to live tape.
+            Current trading prices, daily changes, and 30-day percentage calculations are computed against live Yahoo Finance exchange tape. All formulas are published alongside the underlying source tape data.
           </p>
         </div>
 
         <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
-          <strong class="text-emerald-400 block text-xs">4. U.S. Congress Legislative Acts</strong>
+          <strong class="text-emerald-400 block text-xs">4. Donald Trump Public Social Wire (Low Weighting)</strong>
           <p class="text-slate-400">
-            Statutory authorities (NDAA, CHIPS Act, CISA Directives) are cross-referenced with official records on <a href="https://www.congress.gov" target="_blank" class="text-blue-400 underline">Congress.gov</a>.
+            Donald Trump's public statements regarding tariffs, defense spending, and technology policy are captured with direct links to Truth Social. They are allocated a strictly limited 5% weighting to provide context without distorting audited filing and price data.
           </p>
         </div>
       </div>
@@ -351,6 +474,12 @@ function getDashboardHtml() {
     let currentDataset = ${JSON.stringify(dataset)};
     let activeSignalId = currentDataset.signals[0]?.id;
 
+    function isLanxessString(str) {
+      if (!str) return false;
+      const s = String(str).toUpperCase();
+      return s.includes('LANXESS') || s === 'LXS.DE' || s === 'LNXSF' || s === 'LNXSY' || s === 'LXS';
+    }
+
     function toggleTransparencyModal() {
       const modal = document.getElementById('transparency-modal');
       modal.classList.toggle('hidden');
@@ -359,10 +488,61 @@ function getDashboardHtml() {
     function updateKpiCards() {
       if (!currentDataset.summary) return;
       document.getElementById('kpi-active').innerText = currentDataset.summary.activeSignalsCount || currentDataset.signals.length;
-      document.getElementById('kpi-winrate').innerText = (currentDataset.summary.signalWinRatePct || 78.6) + '%';
+      document.getElementById('kpi-tracked').innerText = currentDataset.summary.trackedTickersCount || currentDataset.signals.length;
+      const coreCount = ${CORE_TICKERS.length};
+      const userCount = (currentDataset.summary.userAddedTickersCount ?? (currentDataset.signals.length - coreCount));
+      document.getElementById('kpi-core-user').innerText = coreCount + ' Core · ' + Math.max(0, userCount) + ' User-Added';
       document.getElementById('kpi-ptrs').innerText = currentDataset.summary.officialPtrFilingsCataloged || 379;
       document.getElementById('kpi-rss').innerText = currentDataset.news.length || 30;
       document.getElementById('last-sync-time').innerText = 'Last Synced: ' + new Date(currentDataset.summary.lastUpdatedIso || Date.now()).toLocaleTimeString();
+    }
+
+    function renderTrackedChips() {
+      const container = document.getElementById('tracked-chips-container');
+      const tracked = currentDataset.trackedTickers || { coreTickers: ${JSON.stringify(CORE_TICKERS)}, userTickers: [] };
+      const coreList = tracked.coreTickers || ${JSON.stringify(CORE_TICKERS)};
+      const userList = tracked.userTickers || [];
+
+      let html = '';
+
+      // Core tickers
+      for (const t of coreList) {
+        if (isLanxessString(t)) continue;
+        const sig = currentDataset.signals.find(s => s.ticker === t);
+        const verdict = sig?.verdict?.action || 'WATCH';
+        const vColor = verdict === 'BUY' ? 'text-emerald-400 border-emerald-800/80 bg-emerald-950/40' :
+                       verdict === 'SELL' ? 'text-rose-400 border-rose-800/80 bg-rose-950/40' :
+                       'text-amber-400 border-amber-800/80 bg-amber-950/40';
+
+        html += \`
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono">
+            <button onclick="selectSignalByTicker('\${t}')" class="font-bold text-white hover:text-emerald-400 cursor-pointer">\${t}</button>
+            <span class="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400">Core</span>
+            <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded border \${vColor}">\${verdict}</span>
+          </span>
+        \`;
+      }
+
+      // User tickers
+      for (const t of userList) {
+        if (isLanxessString(t)) continue;
+        const sig = currentDataset.signals.find(s => s.ticker === t);
+        const verdict = sig?.verdict?.action || 'WATCH';
+        const vColor = verdict === 'BUY' ? 'text-emerald-400 border-emerald-800/80 bg-emerald-950/40' :
+                       verdict === 'SELL' ? 'text-rose-400 border-rose-800/80 bg-rose-950/40' :
+                       'text-amber-400 border-amber-800/80 bg-amber-950/40';
+
+        html += \`
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-blue-900/60 text-xs font-mono">
+            <button onclick="selectSignalByTicker('\${t}')" class="font-bold text-blue-300 hover:text-white cursor-pointer">\${t}</button>
+            <span class="text-[10px] px-1 py-0.2 rounded bg-blue-950 text-blue-300 border border-blue-800/50">User</span>
+            <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded border \${vColor}">\${verdict}</span>
+            <button onclick="handleRemoveStock('\${t}')" title="Remove \${t}" class="text-slate-400 hover:text-rose-400 ml-0.5 cursor-pointer font-bold">×</button>
+          </span>
+        \`;
+      }
+
+      container.innerHTML = html;
     }
 
     function renderSignals() {
@@ -371,7 +551,9 @@ function getDashboardHtml() {
       const directionFilter = document.getElementById('direction-filter').value;
 
       const filtered = currentDataset.signals.filter(s => {
-        const matchesDir = directionFilter === 'ALL' || s.direction === directionFilter;
+        if (isLanxessString(s.ticker) || isLanxessString(s.companyName)) return false;
+        const verdict = s.verdict?.action || s.direction;
+        const matchesDir = directionFilter === 'ALL' || verdict === directionFilter || s.direction === directionFilter;
         const matchesSearch = s.ticker.toLowerCase().includes(searchQuery) ||
                               s.companyName.toLowerCase().includes(searchQuery) ||
                               s.headline.toLowerCase().includes(searchQuery);
@@ -379,20 +561,26 @@ function getDashboardHtml() {
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">No signals match filter.</div>';
+        container.innerHTML = '<div class="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">No stocks match filter.</div>';
         return;
       }
 
       container.innerHTML = filtered.map(s => {
         const isSelected = s.id === activeSignalId;
-        const isBullish = s.direction === 'BULLISH';
-        const isBearish = s.direction === 'BEARISH';
-        const badgeColor = isBullish ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-                           isBearish ? 'bg-rose-950 text-rose-300 border-rose-800' :
+        const verdict = s.verdict?.action || (s.direction === 'BULLISH' ? 'BUY' : s.direction === 'BEARISH' ? 'SELL' : 'HOLD');
+        const conf = s.verdict?.confidenceScorePct || s.confidenceScorePct;
+
+        const isBuy = verdict === 'BUY';
+        const isSell = verdict === 'SELL';
+        const badgeColor = isBuy ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+                           isSell ? 'bg-rose-950 text-rose-300 border-rose-800' :
                            'bg-amber-950 text-amber-300 border-amber-800';
 
         const curPrice = s.metrics.currentPrice ?? s.metrics.entryPrice;
-        const citationCount = s.citations?.length || (s.evidence.disclosures.length + s.evidence.newsCatalysts.length);
+        const citationCount = s.citations?.length || 0;
+        const quoteObj = (currentDataset.quotes || []).find(q => q.ticker === s.ticker);
+        const change30d = quoteObj?.change30DayPct ?? 0;
+        const change1d = quoteObj?.changeTodayPct ?? 0;
 
         return \`
           <div onclick="selectSignal('\${s.id}')" class="p-4 rounded-xl border transition-all cursor-pointer \${isSelected ? 'bg-slate-900 border-emerald-500 ring-1 ring-emerald-500/40' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
@@ -405,18 +593,23 @@ function getDashboardHtml() {
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-semibold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">$\${curPrice}</span>
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded border \${badgeColor}">
-                  \${s.direction} · \${s.confidenceScorePct}%
+                <a href="https://finance.yahoo.com/quote/\${s.ticker}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-xs font-mono font-semibold text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 hover:text-emerald-300 flex items-center gap-1">
+                  $\${curPrice}
+                  <svg class="h-2.5 w-2.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+                <span class="text-xs font-bold px-2 py-0.5 rounded border \${badgeColor}">
+                  \${verdict} · \${conf}%
                 </span>
               </div>
             </div>
-            <p class="text-xs text-slate-200 font-medium mb-2.5">\${s.headline}</p>
+
+            <p class="text-xs text-slate-300 font-medium mb-2.5 line-clamp-2">\${s.verdict?.rationale || s.headline}</p>
+
             <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80 gap-2">
               <div class="flex items-center gap-3">
-                <span>Entry: <strong class="text-white">$\${s.metrics.entryPrice}</strong></span>
+                <span>Today: <strong class="\${change1d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">\${change1d >= 0 ? '+' : ''}\${change1d}%</strong></span>
+                <span>30-Day: <strong class="\${change30d >= 0 ? 'text-emerald-400' : 'text-rose-400'}">\${change30d >= 0 ? '+' : ''}\${change30d}%</strong></span>
                 <span>Target: <strong class="text-emerald-400">$\${s.metrics.targetPrice}</strong></span>
-                <span>Return: <strong class="\${s.metrics.returnSinceSignalPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">+\${s.metrics.returnSinceSignalPct}%</strong></span>
               </div>
               <span class="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full">
                 <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -434,26 +627,81 @@ function getDashboardHtml() {
       renderBriefing();
     }
 
+    function selectSignalByTicker(ticker) {
+      const sig = currentDataset.signals.find(s => s.ticker === ticker);
+      if (sig) {
+        activeSignalId = sig.id;
+        renderSignals();
+        renderBriefing();
+      }
+    }
+
     function renderBriefing() {
       const s = currentDataset.signals.find(sig => sig.id === activeSignalId) || currentDataset.signals[0];
       if (!s) return;
+
+      const verdict = s.verdict?.action || (s.direction === 'BULLISH' ? 'BUY' : s.direction === 'BEARISH' ? 'SELL' : 'HOLD');
+      const conf = s.verdict?.confidenceScorePct || s.confidenceScorePct;
 
       document.getElementById('briefing-conviction').innerText = s.conviction + ' Conviction';
       document.getElementById('briefing-model').innerText = s.aiModel;
       document.getElementById('briefing-date').innerText = 'Generated ' + (s.generatedAt ? s.generatedAt.split('T')[0] : 'Today');
       document.getElementById('briefing-title').innerText = s.ticker + ' · ' + s.companyName;
-      document.getElementById('briefing-price-tag').innerText = 'Current: $' + (s.metrics.currentPrice || s.metrics.entryPrice);
-      document.getElementById('briefing-headline').innerText = s.headline;
       
-      // Format thesis with clean linebreaks
-      const formattedThesis = s.thesis.split('\\n\\n').map(p => \`<p>\${p.replace(/\\n/g, '<br>')}</p>\`).join('');
-      document.getElementById('briefing-thesis').innerHTML = formattedThesis;
+      const priceTag = document.getElementById('briefing-price-tag');
+      priceTag.innerText = 'Current: $' + (s.metrics.currentPrice || s.metrics.entryPrice) + ' (Tape) ↗';
+      priceTag.href = 'https://finance.yahoo.com/quote/' + s.ticker;
 
-      // Render DEDICATED CITATIONS AUDIT TRAIL
+      document.getElementById('briefing-headline').innerText = s.headline;
+
+      // Verdict Box
+      const verdictBadge = document.getElementById('briefing-verdict-badge');
+      verdictBadge.innerText = verdict;
+      verdictBadge.className = verdict === 'BUY'
+        ? 'px-3 py-1 rounded text-xs font-black bg-emerald-950 text-emerald-300 border border-emerald-800'
+        : verdict === 'SELL'
+        ? 'px-3 py-1 rounded text-xs font-black bg-rose-950 text-rose-300 border border-rose-800'
+        : 'px-3 py-1 rounded text-xs font-black bg-amber-950 text-amber-300 border border-amber-800';
+
+      document.getElementById('briefing-confidence').innerText = 'Confidence: ' + conf + '%';
+      document.getElementById('briefing-verdict-rationale').innerText = s.verdict?.rationale || s.thesis;
+
+      // Render Multi-Pillar Evidentiary Derivation
+      const pillarsContainer = document.getElementById('briefing-pillars-container');
+      const calcMethodEl = document.getElementById('briefing-calc-method');
+      calcMethodEl.innerText = s.verdict?.calculationMethod || 'Multi-pillar derivation with transparent weighting.';
+
+      if (s.verdict?.pillars && s.verdict.pillars.length > 0) {
+        pillarsContainer.innerHTML = s.verdict.pillars.map(p => \`
+          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <strong class="text-white flex items-center gap-1.5">
+                \${p.name}
+                <span class="text-[10px] text-emerald-400 font-mono">Weight: \${p.weightPct}%</span>
+              </strong>
+              <span class="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded \${p.score > 0 ? 'bg-emerald-950 text-emerald-300' : p.score < 0 ? 'bg-rose-950 text-rose-300' : 'bg-slate-800 text-slate-400'}">
+                Score: \${p.score > 0 ? '+' : ''}\${p.score}
+              </span>
+            </div>
+            <p class="text-slate-300 text-[11px]">\${p.summary}</p>
+            <div class="pt-1 flex flex-wrap items-center gap-2">
+              \${(p.sources || []).map(src => \`
+                <a href="\${src.url}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-blue-400 hover:text-blue-300 underline flex items-center gap-1">
+                  \${src.name} ↗
+                </a>
+              \`).join('')}
+            </div>
+          </div>
+        \`).join('');
+      } else {
+        pillarsContainer.innerHTML = '<p class="text-slate-500 text-xs">Derivation details available on refresh.</p>';
+      }
+
+      // Render Primary Citations Audit Trail
       const citationsContainer = document.getElementById('briefing-citations');
       if (s.citations && s.citations.length > 0) {
         citationsContainer.innerHTML = s.citations.map(c => \`
-          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs space-y-1.5">
+          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs space-y-1">
             <div class="flex items-center justify-between">
               <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                 \${c.sourceType}
@@ -476,49 +724,88 @@ function getDashboardHtml() {
 
       // Render Disclosures with authentic PDF links
       const discContainer = document.getElementById('briefing-disclosures');
-      discContainer.innerHTML = s.evidence.disclosures.map(d => {
-        const pdfUrl = d.filingDocUrl || 'https://disclosures-clerk.house.gov/public_disc/financial-pdfs/2026FD.ZIP';
-
-        return \`
-          <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs">
-            <div class="flex items-center justify-between">
-              <strong class="text-white flex items-center gap-1.5">
-                \${d.politicianName}
-                <span class="text-[10px] text-slate-400 font-normal">(\${d.transactionDate || '2026'})</span>
-              </strong>
-              <span class="text-emerald-400 font-semibold">\${d.transactionType} (\${d.amountBracket})</span>
+      if (s.evidence.disclosures && s.evidence.disclosures.length > 0) {
+        discContainer.innerHTML = s.evidence.disclosures.map(d => {
+          const pdfUrl = d.filingDocUrl || 'https://disclosures-clerk.house.gov/public_disc/financial-pdfs/2026FD.ZIP';
+          return \`
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs">
+              <div class="flex items-center justify-between">
+                <strong class="text-white flex items-center gap-1.5">
+                  \${d.politicianName}
+                  <span class="text-[10px] text-slate-400 font-normal">(\${d.transactionDate || '2026'})</span>
+                </strong>
+                <span class="\${d.transactionType === 'BUY' ? 'text-emerald-400' : 'text-rose-400'} font-semibold">\${d.transactionType} (\${d.amountBracket})</span>
+              </div>
+              <p class="text-slate-400 text-[11px] mt-1">\${d.committeeContext}</p>
+              <div class="mt-2 pt-1.5 border-t border-slate-900 flex items-center justify-between">
+                <span class="text-[10px] text-slate-500 font-mono">STOCK Act PTR Document</span>
+                <a href="\${pdfUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline flex items-center gap-1">
+                  View Official Clerk PDF
+                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
             </div>
-            <p class="text-slate-400 text-[11px] mt-1">\${d.committeeContext}</p>
-            <div class="mt-2 pt-1.5 border-t border-slate-900 flex items-center justify-between">
-              <span class="text-[10px] text-slate-500 font-mono">STOCK Act PTR Document</span>
-              <a href="\${pdfUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline flex items-center gap-1">
-                View Official Clerk PDF
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              </a>
-            </div>
+          \`;
+        }).join('');
+      } else {
+        discContainer.innerHTML = \`
+          <div class="p-3 bg-slate-950 rounded border border-slate-800 text-xs text-slate-400 space-y-1">
+            <p>No congressional transactions cataloged in 2026 House Clerk records for \${s.ticker}.</p>
+            <p class="text-[10px] text-amber-400/90">Note: Absence of insider congressional disclosures transparently reduces conviction score.</p>
           </div>
         \`;
-      }).join('');
+      }
 
       // Render News with live links
       const newsContainer = document.getElementById('briefing-news');
-      newsContainer.innerHTML = s.evidence.newsCatalysts.map(n => {
-        const articleUrl = n.articleUrl || '#';
-
-        return \`
-          <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs">
-            <div class="flex items-center justify-between text-slate-400 text-[11px]">
-              <span class="font-medium text-emerald-400/90">\${n.source}</span>
-              <span>\${n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : 'Live Feed'}</span>
+      if (s.evidence.newsCatalysts && s.evidence.newsCatalysts.length > 0) {
+        newsContainer.innerHTML = s.evidence.newsCatalysts.map(n => {
+          const articleUrl = n.articleUrl || '#';
+          return \`
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs">
+              <div class="flex items-center justify-between text-slate-400 text-[11px]">
+                <span class="font-medium text-emerald-400/90">\${n.source}</span>
+                <span>\${n.publishedAt ? new Date(n.publishedAt).toLocaleDateString() : 'Live Feed'}</span>
+              </div>
+              <a href="\${articleUrl}" target="_blank" rel="noopener noreferrer" class="text-slate-200 font-medium mt-0.5 hover:text-emerald-300 block transition-colors flex items-center gap-1.5">
+                <span>\${n.headline}</span>
+                <svg class="h-3 w-3 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+              <p class="text-slate-400 text-[11px] mt-1">\${n.relevanceNote}</p>
             </div>
-            <a href="\${articleUrl}" target="_blank" rel="noopener noreferrer" class="text-slate-200 font-medium mt-0.5 hover:text-emerald-300 block transition-colors flex items-center gap-1.5">
-              <span>\${n.headline}</span>
-              <svg class="h-3 w-3 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            </a>
-            <p class="text-slate-400 text-[11px] mt-1">\${n.relevanceNote}</p>
+          \`;
+        }).join('');
+      } else {
+        newsContainer.innerHTML = '<p class="text-slate-500 text-xs">No recent news ingested for this stock.</p>';
+      }
+
+      // Render Trump Posts relevant to this stock
+      const trumpContainer = document.getElementById('briefing-trump');
+      const stockTrumpPosts = (currentDataset.trumpPosts || []).filter(tp => {
+        if (isLanxessString(tp)) return false;
+        return (tp.matchedTickers && tp.matchedTickers.includes(s.ticker)) ||
+               (tp.content && tp.content.toUpperCase().includes(s.ticker));
+      });
+
+      if (stockTrumpPosts.length > 0) {
+        trumpContainer.innerHTML = stockTrumpPosts.map(tp => \`
+          <div class="bg-slate-950 p-2.5 rounded border border-rose-950/60 text-xs space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold text-rose-300">\${tp.author}</span>
+              <span class="text-slate-500 font-mono">\${new Date(tp.publishedAt).toLocaleDateString()}</span>
+            </div>
+            <p class="text-slate-200 text-xs">\${tp.content}</p>
+            <div class="pt-1 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-900">
+              <span class="px-1.5 py-0.2 rounded bg-slate-900 text-slate-300 font-mono">\${tp.topic}</span>
+              <a href="\${tp.postUrl}" target="_blank" rel="noopener noreferrer" class="text-rose-400 hover:text-rose-300 underline flex items-center gap-1">
+                View Public Post ↗
+              </a>
+            </div>
           </div>
-        \`;
-      }).join('');
+        \`).join('');
+      } else {
+        trumpContainer.innerHTML = '<p class="text-slate-500 text-xs">No direct Trump social media statements identified for this stock.</p>';
+      }
 
       // Render Legislative Hooks
       const hooksContainer = document.getElementById('briefing-hooks');
@@ -536,24 +823,175 @@ function getDashboardHtml() {
 
     function renderPoliticians() {
       const container = document.getElementById('politicians-list');
-      container.innerHTML = currentDataset.politicians.map(p => \`
-        <div class="py-2.5 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5">
-            <img src="\${p.avatarUrl}" alt="\${p.name}" class="h-8 w-8 rounded-full object-cover border border-slate-700 bg-slate-800 shrink-0" onerror="this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-white">\${p.name}</span>
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">\${p.party[0]}-\${p.state}</span>
+      container.innerHTML = currentDataset.politicians.map(p => {
+        const bioguideLink = p.bioguideUrl || (p.bioguideId ? 'https://bioguide.congress.gov/search/bio/' + p.bioguideId : '#');
+        const initials = p.name ? p.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'US';
+        const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100%25' height='100%25' fill='%23334155'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='36' font-weight='bold' fill='%23f8fafc'>" + initials + "</text></svg>";
+
+        return \`
+          <div class="py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <img
+                src="\${p.avatarUrl}"
+                alt="\${p.name}"
+                class="h-8 w-8 rounded-full object-cover border border-slate-700 bg-slate-800 shrink-0"
+                onerror="this.onerror=null; this.src='\${fallbackSvg}'"
+              />
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <a href="\${bioguideLink}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-white hover:text-blue-300 underline flex items-center gap-1">
+                    \${p.name}
+                    <svg class="h-2.5 w-2.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">\${p.party[0]}-\${p.state}</span>
+                </div>
+                <p class="text-[11px] text-slate-400">\${p.chamber} · \${p.totalTradesTracked} trades · Bioguide: \${p.bioguideId || 'Official'}</p>
               </div>
-              <p class="text-[11px] text-slate-400">\${p.chamber} · \${p.totalTradesTracked} trades</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-semibold text-emerald-400 block">+\${p.alphaVsSp500Pct}% Alpha</span>
+              <span class="text-[11px] text-slate-400">$\${(p.tradeVolumeYtdUsd / 1000000).toFixed(1)}M YTD</span>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-xs font-semibold text-emerald-400 block">+\${p.alphaVsSp500Pct}% Alpha</span>
-            <span class="text-[11px] text-slate-400">$\${(p.tradeVolumeYtdUsd / 1000000).toFixed(1)}M YTD</span>
+        \`;
+      }).join('');
+    }
+
+    function renderTrumpPosts() {
+      const container = document.getElementById('trump-posts-feed');
+      const posts = (currentDataset.trumpPosts || []).filter(p => !isLanxessString(p));
+      document.getElementById('trump-posts-count').innerText = posts.length + ' Verified Statements';
+
+      if (posts.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs p-3">No Trump public statements currently cataloged.</p>';
+        return;
+      }
+
+      container.innerHTML = posts.map(p => {
+        const sentimentColor = p.sentiment === 'Bullish' ? 'text-emerald-400 border-emerald-800/80 bg-emerald-950/40' :
+                              p.sentiment === 'Bearish' ? 'text-rose-400 border-rose-800/80 bg-rose-950/40' :
+                              'text-slate-300 border-slate-700 bg-slate-800/40';
+
+        return \`
+          <div class="py-3 first:pt-0 last:pb-0 space-y-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="font-bold text-white">\${p.author}</span>
+                <span class="text-slate-500 font-mono">\${p.handle}</span>
+              </div>
+              <span class="text-slate-500 font-mono text-[10px]">\${new Date(p.publishedAt).toLocaleDateString()}</span>
+            </div>
+            <p class="text-xs text-slate-200 leading-relaxed">\${p.content}</p>
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] px-1.5 py-0.2 rounded border font-mono \${sentimentColor}">\${p.sentiment || 'Neutral'}</span>
+                <span class="text-[10px] text-slate-400 truncate max-w-[200px]">\${p.topic}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                \${(p.matchedTickers || []).map(t => \`
+                  <button onclick="selectSignalByTicker('\${t}')" class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-emerald-400 hover:text-white cursor-pointer">\${t}</button>
+                \`).join('')}
+                <a href="\${p.postUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-rose-400 hover:text-rose-300 underline flex items-center gap-0.5">
+                  Source Post ↗
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
-      \`).join('');
+        \`;
+      }).join('');
+    }
+
+    async function handleAddStock(event) {
+      event.preventDefault();
+      const input = document.getElementById('ticker-input');
+      const btn = document.getElementById('add-stock-btn');
+      const btnText = document.getElementById('add-stock-btn-text');
+      const feedback = document.getElementById('ticker-feedback');
+      const ticker = input.value.trim().toUpperCase();
+
+      if (!ticker) return;
+
+      if (isLanxessString(ticker)) {
+        feedback.className = 'text-xs px-3 py-2 rounded-lg border bg-rose-950/80 text-rose-300 border-rose-800 block';
+        feedback.innerText = 'LANXESS AG and related securities (LXS, LXS.DE, LNXSF, LNXSY) are excluded from this platform.';
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.innerText = 'Validating...';
+      feedback.className = 'hidden';
+
+      try {
+        const res = await fetch('/api/tickers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          feedback.className = 'text-xs px-3 py-2 rounded-lg border bg-emerald-950/80 text-emerald-300 border-emerald-800 block';
+          feedback.innerText = '✓ Successfully added ' + data.ticker + ' (' + data.companyName + ') with live quote $' + data.quote.currentPrice + '!';
+          input.value = '';
+          await refreshAllData();
+          selectSignalByTicker(data.ticker);
+          setTimeout(() => { feedback.className = 'hidden'; }, 4000);
+        } else {
+          feedback.className = 'text-xs px-3 py-2 rounded-lg border bg-rose-950/80 text-rose-300 border-rose-800 block';
+          feedback.innerText = '✕ ' + (data.error || 'Failed to add ticker.');
+        }
+      } catch (err) {
+        feedback.className = 'text-xs px-3 py-2 rounded-lg border bg-rose-950/80 text-rose-300 border-rose-800 block';
+        feedback.innerText = '✕ Network error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btnText.innerText = 'Add Stock';
+      }
+    }
+
+    async function handleRemoveStock(ticker) {
+      if (!confirm('Remove ' + ticker + ' from your tracked stocks?')) return;
+      const feedback = document.getElementById('ticker-feedback');
+
+      try {
+        const res = await fetch('/api/tickers/' + encodeURIComponent(ticker), { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) {
+          feedback.className = 'text-xs px-3 py-2 rounded-lg border bg-blue-950/80 text-blue-300 border-blue-800 block';
+          feedback.innerText = 'Removed ' + ticker + ' from tracked list.';
+          await refreshAllData();
+          setTimeout(() => { feedback.className = 'hidden'; }, 3000);
+        } else {
+          alert(data.error || 'Could not remove stock.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    async function refreshAllData() {
+      try {
+        const [sigRes, sumRes, quotesRes] = await Promise.all([
+          fetch('/api/signals').then(r => r.json()),
+          fetch('/api/summary').then(r => r.json()),
+          fetch('/api/quotes').then(r => r.json()),
+        ]);
+
+        if (Array.isArray(sigRes)) currentDataset.signals = sigRes;
+        if (sumRes) currentDataset.summary = sumRes;
+        if (Array.isArray(quotesRes)) currentDataset.quotes = quotesRes;
+
+        const trackedRes = await fetch('/api/tickers').then(r => r.json());
+        if (trackedRes) currentDataset.trackedTickers = trackedRes;
+
+        updateKpiCards();
+        renderTrackedChips();
+        renderSignals();
+        renderBriefing();
+      } catch (err) {
+        console.error('Error refreshing local data:', err);
+      }
     }
 
     async function triggerLiveRefresh() {
@@ -572,9 +1010,11 @@ function getDashboardHtml() {
           currentDataset = freshData;
           activeSignalId = currentDataset.signals[0]?.id;
           updateKpiCards();
+          renderTrackedChips();
           renderSignals();
           renderBriefing();
           renderPoliticians();
+          renderTrumpPosts();
           text.innerText = 'Synced!';
           setTimeout(() => { text.innerText = 'Refresh Live Feeds'; }, 2000);
         } else {
@@ -595,9 +1035,11 @@ function getDashboardHtml() {
     document.getElementById('direction-filter').addEventListener('change', renderSignals);
 
     updateKpiCards();
+    renderTrackedChips();
     renderSignals();
     renderBriefing();
     renderPoliticians();
+    renderTrumpPosts();
   </script>
 </body>
 </html>`;
@@ -607,13 +1049,14 @@ function getDashboardHtml() {
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
-  const dataset = getIntelligence();
+  const rawDataset = getIntelligence();
+  const dataset = sanitizeDataset(rawDataset);
 
   // Handle CORS Preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     });
     res.end();
@@ -647,6 +1090,7 @@ const server = http.createServer(async (req, res) => {
       sourceMode: dataset.summary?.dataSourceMode || 'LIVE_PUBLIC_FEEDS',
       lastUpdated: dataset.summary?.lastUpdatedIso || new Date().toISOString(),
       activeSignals: dataset.signals?.length || 0,
+      trackedTickers: getTrackedTickers().allTickers.length,
       timestamp: new Date().toISOString(),
     });
   }
@@ -656,12 +1100,67 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, dataset.summary);
   }
 
+  // GET /api/tickers - Tracked tickers list
+  if (pathname === '/api/tickers' && req.method === 'GET') {
+    return sendJson(res, 200, getTrackedTickers());
+  }
+
+  // POST /api/tickers - Add user-tracked stock ticker with live validation
+  if (pathname === '/api/tickers' && req.method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const rawTicker = body.ticker;
+      if (!rawTicker) {
+        return sendJson(res, 400, { error: 'Ticker symbol is required.' });
+      }
+
+      if (isLanxess(rawTicker)) {
+        return sendJson(res, 400, {
+          error: 'LANXESS AG and related securities (LXS, LXS.DE, LNXSF, LNXSY) are excluded from this platform.',
+        });
+      }
+
+      const result = await addUserTrackedTicker(rawTicker);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+  }
+
+  // DELETE /api/tickers/:ticker - Remove user-tracked stock ticker
+  if (pathname.startsWith('/api/tickers/') && req.method === 'DELETE') {
+    try {
+      const parts = pathname.split('/').filter(Boolean);
+      const ticker = parts[2];
+      if (!ticker) {
+        return sendJson(res, 400, { error: 'Ticker symbol is required.' });
+      }
+
+      const result = removeUserTrackedTicker(ticker);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+  }
+
+  // GET /api/trump-posts - Trump public social media statements
+  if (pathname === '/api/trump-posts') {
+    const ticker = parsedUrl.searchParams.get('ticker');
+    const allPosts = dataset.trumpPosts || loadTrumpPosts();
+    if (ticker) {
+      return sendJson(res, 200, getTrumpPostsForTicker(ticker, allPosts));
+    }
+    return sendJson(res, 200, allPosts);
+  }
+
   // GET /api/signals or /api/signals/:id
   if (pathname.startsWith('/api/signals')) {
     const parts = pathname.split('/').filter(Boolean);
     if (parts.length === 3) {
       const id = parts[2];
-      const signal = dataset.signals.find((s) => s.id === id || s.ticker.toUpperCase() === id.toUpperCase());
+      const signal = dataset.signals.find(
+        (s) => !isLanxess(s) && (s.id === id || s.ticker.toUpperCase() === id.toUpperCase())
+      );
       if (!signal) {
         return sendJson(res, 404, { error: 'Signal not found', id });
       }
@@ -671,17 +1170,23 @@ const server = http.createServer(async (req, res) => {
     // List with query filters
     const direction = parsedUrl.searchParams.get('direction');
     const ticker = parsedUrl.searchParams.get('ticker');
+    const verdict = parsedUrl.searchParams.get('verdict');
     const minConfidence = parsedUrl.searchParams.get('minConfidence');
 
-    let results = dataset.signals;
+    let results = dataset.signals.filter((s) => !isLanxess(s));
     if (direction) {
       results = results.filter((s) => s.direction === direction.toUpperCase());
+    }
+    if (verdict) {
+      results = results.filter((s) => s.verdict?.action === verdict.toUpperCase());
     }
     if (ticker) {
       results = results.filter((s) => s.ticker.toUpperCase() === ticker.toUpperCase());
     }
     if (minConfidence) {
-      results = results.filter((s) => s.confidenceScorePct >= Number(minConfidence));
+      results = results.filter(
+        (s) => (s.verdict?.confidenceScorePct ?? s.confidenceScorePct) >= Number(minConfidence)
+      );
     }
 
     return sendJson(res, 200, results);
@@ -705,7 +1210,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/disclosures') {
     const ticker = parsedUrl.searchParams.get('ticker');
     const politicianId = parsedUrl.searchParams.get('politicianId');
-    let results = dataset.disclosures;
+    let results = dataset.disclosures.filter((d) => !isLanxess(d));
     if (ticker) {
       results = results.filter((d) => d.ticker.toUpperCase() === ticker.toUpperCase());
     }
@@ -717,12 +1222,27 @@ const server = http.createServer(async (req, res) => {
 
   // GET /api/news
   if (pathname === '/api/news') {
-    return sendJson(res, 200, dataset.news);
+    const ticker = parsedUrl.searchParams.get('ticker');
+    let results = dataset.news.filter((n) => !isLanxess(n));
+    if (ticker) {
+      const tUpper = ticker.toUpperCase();
+      results = results.filter(
+        (n) =>
+          (n.relatedTickers && n.relatedTickers.includes(tUpper)) ||
+          (n.headline && n.headline.toUpperCase().includes(tUpper))
+      );
+    }
+    return sendJson(res, 200, results);
   }
 
   // GET /api/quotes
   if (pathname === '/api/quotes') {
-    return sendJson(res, 200, dataset.quotes || []);
+    const ticker = parsedUrl.searchParams.get('ticker');
+    let results = (dataset.quotes || []).filter((q) => !isLanxess(q));
+    if (ticker) {
+      results = results.filter((q) => q.ticker.toUpperCase() === ticker.toUpperCase());
+    }
+    return sendJson(res, 200, results);
   }
 
   // ----------------------------------------------------
@@ -738,6 +1258,8 @@ server.listen(PORT, HOST, () => {
   console.log(` Dashboard: http://localhost:${PORT}`);
   console.log(` Health API: http://localhost:${PORT}/api/healthz`);
   console.log(` Signals API: http://localhost:${PORT}/api/signals`);
+  console.log(` Tickers API: http://localhost:${PORT}/api/tickers`);
+  console.log(` Trump Feed API: http://localhost:${PORT}/api/trump-posts`);
   console.log(` Refresh API: POST http://localhost:${PORT}/api/refresh`);
   console.log('====================================================');
 });

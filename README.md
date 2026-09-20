@@ -1,14 +1,11 @@
 # InsightTrader
 Steelhacks 2026
 
-Isaac Geer
-ibg12@pitt.edu
+Isaac Geer - *ibg12@pitt.edu*
 
-Aidan Russell
+Aidan Russell - *acr163@pitt.edu*
 
-
-Alex Mitasev
-ajm674@pitt.edu
+Alex Mitasev - *ajm674@pitt.edu*
 
 
 Topic:

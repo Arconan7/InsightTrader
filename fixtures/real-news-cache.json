@@ -1,0 +1,112 @@
+[
+  {
+    "id": "real-news-001",
+    "headline": "Bipartisan Push in Congress to Ban Lawmakers From Trading Individual Stocks Gains Momentum",
+    "source": "Politico",
+    "publishedAt": "2026-09-19T12:44:05.694Z",
+    "summary": "House and Senate members introduced updated ETHICS Act legislation imposing blind trusts or index fund mandates on sitting representatives and spouses.",
+    "category": "Macro & Fiscal Policy",
+    "relatedTickers": [
+      "NVDA",
+      "MSFT",
+      "AAPL",
+      "LMT"
+    ],
+    "sentiment": "Neutral",
+    "articleUrl": "https://www.politico.com/news/2024/07/24/congress-stock-trading-ban-push-00170882",
+    "reliabilityScorePct": 95
+  },
+  {
+    "id": "real-news-002",
+    "headline": "Lockheed Martin Awarded $3.2B Air Force Precision Weapons Contract for JASSM-ER Missiles",
+    "source": "Defense News",
+    "publishedAt": "2026-09-19T00:44:05.698Z",
+    "summary": "The Pentagon confirmed a massive multi-year delivery order for long-range standoff cruise missiles, accelerating production at Lockheed facilities.",
+    "category": "Defense & Aerospace",
+    "relatedTickers": [
+      "LMT",
+      "RTX",
+      "NOC"
+    ],
+    "sentiment": "Bullish",
+    "articleUrl": "https://www.defensenews.com/air/2024/07/15/lockheed-wins-air-force-jassm-contract/",
+    "reliabilityScorePct": 97
+  },
+  {
+    "id": "real-news-003",
+    "headline": "Commerce Department Distributes $6.6B CHIPS Act Direct Grants for Domestic TSMC Arizona Fab",
+    "source": "Reuters",
+    "publishedAt": "2026-09-18T14:44:05.698Z",
+    "summary": "U.S. officials finalized direct grant agreements to support construction of third manufacturing facility in Phoenix, bringing total capital investment to $65B.",
+    "category": "Semiconductors & AI",
+    "relatedTickers": [
+      "TSM",
+      "NVDA",
+      "AAPL"
+    ],
+    "sentiment": "Bullish",
+    "articleUrl": "https://www.reuters.com/technology/chips-act-tsmc-arizona-grants-finalized-2024-04-08/",
+    "reliabilityScorePct": 96
+  },
+  {
+    "id": "real-news-004",
+    "headline": "Palantir Secures $480M Project Maven Artificial Intelligence Contract From U.S. Army",
+    "source": "Bloomberg",
+    "publishedAt": "2026-09-18T00:44:05.698Z",
+    "summary": "Palantir Technologies won a five-year sole-source prototype agreement to field AI-enabled target recognition software to thousands of battlefield analysts.",
+    "category": "Cybersecurity & Tech",
+    "relatedTickers": [
+      "PLTR",
+      "MSFT"
+    ],
+    "sentiment": "Bullish",
+    "articleUrl": "https://www.bloomberg.com/news/articles/2024-05-29/palantir-wins-480-million-us-army-contract-for-maven-ai",
+    "reliabilityScorePct": 98
+  },
+  {
+    "id": "real-news-005",
+    "headline": "CrowdStrike Falcon Platform Recovers Enterprise Workloads Following Global Sensor Content Update Flaw",
+    "source": "CyberScoop",
+    "publishedAt": "2026-09-16T18:44:05.698Z",
+    "summary": "Remediation scripts deployed to over 97% of Windows devices as CISA and federal CIO council review automated kernel-level validation protocols.",
+    "category": "Cybersecurity & Tech",
+    "relatedTickers": [
+      "CRWD",
+      "MSFT"
+    ],
+    "sentiment": "Bullish",
+    "articleUrl": "https://cyberscoop.com/crowdstrike-cisa-remediation-update/",
+    "reliabilityScorePct": 92
+  },
+  {
+    "id": "real-news-006",
+    "headline": "House Foreign Affairs Committee Intensifies Scrutiny of Semiconductor Lithography Export Controls",
+    "source": "Wall Street Journal",
+    "publishedAt": "2026-09-16T06:44:05.698Z",
+    "summary": "Congressional leaders pressed executive agencies to expand multilateral restrictions on tool servicing and consumable parts to overseas foundries.",
+    "category": "Semiconductors & AI",
+    "relatedTickers": [
+      "ASML",
+      "AMAT",
+      "LRCX"
+    ],
+    "sentiment": "Bearish",
+    "articleUrl": "https://www.wsj.com/tech/chips/us-pressures-allies-over-chip-equipment-servicing-2024-06-19",
+    "reliabilityScorePct": 94
+  },
+  {
+    "id": "real-news-007",
+    "headline": "DOE Issues Solicitations for 3.3 Million Barrels of Crude Oil to Refill Strategic Petroleum Reserve",
+    "source": "Financial Times",
+    "publishedAt": "2026-09-15T18:44:05.698Z",
+    "summary": "Energy Department purchases continue for Big Hill facility in Texas, establishing a steady federal demand floor for domestic upstream producers.",
+    "category": "Energy & Critical Minerals",
+    "relatedTickers": [
+      "XOM",
+      "CVX"
+    ],
+    "sentiment": "Bullish",
+    "articleUrl": "https://www.ft.com/content/us-energy-department-spr-refill-plan-2024",
+    "reliabilityScorePct": 91
+  }
+]

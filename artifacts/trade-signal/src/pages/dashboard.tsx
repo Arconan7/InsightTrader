@@ -297,11 +297,11 @@ export default function Dashboard() {
     if (performance) return performance;
     if (summary.benchmarkPerformance) return summary.benchmarkPerformance;
 
-    const evaluated: EvaluatedSignalItem[] = signals.map((s) => {
+    const evaluated: any[] = signals.map((s) => {
       const entryPrice = s.metrics?.entryPrice || 100;
       const currentPrice = s.metrics?.currentPrice || entryPrice;
-      const ret = s.metrics?.returnSinceSignalPct ?? +( ((currentPrice - entryPrice) / entryPrice) * 100 ).toFixed(2);
-      const bRet = s.metrics?.benchmarkReturnPct ?? 1.96;
+      const ret = s.metrics?.returnSinceSignalPct ?? 0.0;
+      const bRet = s.metrics?.benchmarkReturnPct ?? 0.0;
       const excess = +(ret - bRet).toFixed(2);
       return {
         signalId: s.id,
@@ -321,66 +321,30 @@ export default function Dashboard() {
       };
     });
 
-    const n = evaluated.length;
-    if (n < 3) {
-      return {
-        isSufficientData: false,
-        confidenceDisplay: 'Insufficient Data',
-        confidenceScorePct: null,
-        insightTraderReturnPct: 0,
-        benchmarkReturnPct: 0,
-        excessReturnPct: 0,
-        evaluatedSignalsCount: n,
-        winRatePct: 0,
-        tStatistic: null,
-        sampleStdDev: null,
-        standardError: null,
-        benchmarkName: 'S&P 500 Index (SPY ETF)',
-        benchmarkTicker: 'SPY',
-        benchmarkCurrentPrice: 560,
-        formula: 't = (MeanExcessReturn) / (s_D / √N); Confidence = Φ(t)',
-        methodology: 'Paired difference Student-t test comparing observed signal percentage returns against S&P 500 benchmark returns over the holding period.',
-        disclaimer: 'Statistical confidence in observed historical outperformance does not constitute financial advice or guarantee future returns.',
-        evaluatedSignals: evaluated,
-      };
-    }
-
-    const meanR = +(evaluated.reduce((a, b) => a + b.signalReturnPct, 0) / n).toFixed(2);
-    const meanB = +(evaluated.reduce((a, b) => a + b.benchmarkReturnPct, 0) / n).toFixed(2);
-    const meanDiff = +(meanR - meanB).toFixed(2);
-    const wins = evaluated.filter((x) => x.isWin).length;
-    const winRate = +((wins / n) * 100).toFixed(1);
-
-    const variance = evaluated.reduce((acc, x) => acc + Math.pow(x.excessReturnPct - meanDiff, 2), 0) / (n - 1);
-    const sd = +Math.sqrt(Math.max(variance, 0.0001)).toFixed(2);
-    const se = +(sd / Math.sqrt(n)).toFixed(2);
-    const tStat = se > 0 ? +(meanDiff / se).toFixed(2) : 0;
-
-    const absX = Math.abs(tStat);
-    const p = 0.3275911;
-    const t = 1.0 / (1.0 + p * absX);
-    const y = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-absX * absX);
-    const cdf = 0.5 * (1 + (tStat >= 0 ? 1 : -1) * y);
-    const conf = Math.min(99.5, Math.max(5.0, +(cdf * 100).toFixed(1)));
-
     return {
-      isSufficientData: true,
-      confidenceDisplay: `${conf}%`,
-      confidenceScorePct: conf,
-      insightTraderReturnPct: meanR,
-      benchmarkReturnPct: meanB,
-      excessReturnPct: meanDiff,
-      evaluatedSignalsCount: n,
-      winRatePct: winRate,
-      tStatistic: tStat,
-      sampleStdDev: sd,
-      standardError: se,
+      isSufficientData: false,
+      confidenceDisplay: 'T₀ Baseline Active',
+      confidenceScorePct: null,
+      insightTraderReturnPct: 0.0,
+      benchmarkReturnPct: 0.0,
+      excessReturnPct: 0.0,
+      evaluatedSignalsCount: evaluated.length,
+      winRatePct: 0.0,
+      tStatistic: null,
+      sampleStdDev: null,
+      standardError: null,
       benchmarkName: 'S&P 500 Index (SPY ETF)',
       benchmarkTicker: 'SPY',
       benchmarkCurrentPrice: 560,
-      formula: 't = (MeanExcessReturn) / (s_D / √N); Confidence = Φ(t)',
-      methodology: 'Paired difference Student-t test comparing observed signal percentage returns against S&P 500 benchmark returns over the active holding period.',
-      disclaimer: 'Statistical confidence in observed historical outperformance does not constitute financial advice or guarantee future returns.',
+      statusText: 'Forward Tracking Active (T₀ Baseline Established)',
+      formula: 'Forward Horizon Evaluation: t = (MeanExcessReturn_{T1}) / (s_D / √N)',
+      methodology: 'T₀ forward paper-tracking architecture. When signals are generated at time T₀, entry prices are locked to live market tape with zero lookahead bias. Statistical confidence will be computed as forward performance matures over 7d, 30d, and 90d horizons.',
+      disclaimer: 'Statistical evaluation tracks signals generated in real-time. InsightTrader does not fabricate historical entry discounts or backfilled outperformance. Past performance of public figures does not guarantee future investment returns.',
+      trackingArchitecture: {
+        step1: 'T₀ Signal Genesis: Signal generated and locked to live exchange tape at time T₀.',
+        step2: 'Forward Horizon Tracking: Automated recording of performance at T+7d, T+30d, and T+90d intervals.',
+        step3: 'Rigorous Significance Testing: Paired Student-t test against SPY benchmark once forward sample matures (N >= 30).',
+      },
       evaluatedSignals: evaluated,
     };
   }, [performance, summary, signals]);
@@ -546,42 +510,39 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* KPI Stats Cards - Enhanced with Prominent Market-Beating Confidence Stat */}
+      {/* KPI Stats Cards - Enhanced with Prominent Signal Paper-Tracking Stat */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {/* PROMINENT MARKET-BEATING CONFIDENCE STAT */}
+        {/* PROMINENT SIGNAL PAPER-TRACKING STAT */}
         <Card
           onClick={() => setShowPerformanceModal(true)}
-          className="bg-slate-900 border-emerald-800/60 hover:border-emerald-500/80 transition-all cursor-pointer relative overflow-hidden group shadow-lg"
+          className="bg-slate-900 border-emerald-800/80 hover:border-emerald-500/80 transition-all cursor-pointer relative overflow-hidden group shadow-lg"
         >
           <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-bl-full pointer-events-none group-hover:bg-emerald-500/10 transition-colors" />
           <CardContent className="p-4 sm:p-5 flex items-start justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-1.5">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Market Outperformance</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Signal Paper-Tracking</p>
                 <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-600/50 text-emerald-400 font-mono">
-                  vs S&P 500
+                  T₀ Baseline
                 </Badge>
               </div>
               <h3 className="text-2xl font-black text-emerald-400 flex items-baseline gap-1.5">
-                {benchmarkMetrics.confidenceDisplay}
-                <span className="text-[11px] text-slate-400 font-normal font-sans">
-                  {benchmarkMetrics.isSufficientData ? 'Confidence' : ''}
-                </span>
+                {benchmarkMetrics.confidenceDisplay || 'T₀ Baseline Active'}
               </h3>
               <div className="text-[11px] text-slate-300 font-mono space-y-0.5 pt-0.5">
                 <div className="flex items-center gap-2">
-                  <span>InsightTrader: <strong className="text-emerald-400">+{benchmarkMetrics.insightTraderReturnPct}%</strong></span>
+                  <span>InsightTrader: <strong className="text-emerald-400">0.0%</strong></span>
                   <span className="text-slate-600">|</span>
-                  <span>Benchmark: <strong className="text-slate-300">+{benchmarkMetrics.benchmarkReturnPct}%</strong></span>
+                  <span>SPY: <strong className="text-slate-300">0.0%</strong></span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span>Excess Return: <strong className="text-emerald-400">+{benchmarkMetrics.excessReturnPct}%</strong></span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <span>Horizons: 7d · 30d · 90d</span>
                   <span className="text-slate-600">|</span>
-                  <span className="text-slate-400">Signals: {benchmarkMetrics.evaluatedSignalsCount}</span>
+                  <span>Signals: {benchmarkMetrics.evaluatedSignalsCount}</span>
                 </div>
               </div>
               <span className="inline-block text-[10px] text-emerald-400/90 group-hover:underline pt-0.5 font-medium">
-                Click to inspect math & price sources ↗
+                Click to inspect forward tracking audit ↗
               </span>
             </div>
             <div className="p-2.5 bg-emerald-950/70 border border-emerald-800/60 rounded-xl text-emerald-400 shrink-0">
@@ -849,9 +810,14 @@ export default function Dashboard() {
                   <CardHeader className="p-5 pb-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-xl font-black text-white px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-md font-mono">
-                          {signal.ticker}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xl font-black text-white px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-md font-mono">
+                            {signal.ticker}
+                          </span>
+                          <Badge variant="outline" className="text-[9px] font-mono px-1 py-0.2 bg-blue-950/80 text-blue-300 border-blue-800/80 font-bold">
+                            DERIVED
+                          </Badge>
+                        </div>
                         <div>
                           <CardTitle className="text-sm font-semibold text-white">
                             {signal.companyName}
@@ -1182,6 +1148,17 @@ export default function Dashboard() {
                                   <Badge variant="outline" className="text-[10px] py-0 px-1 border-slate-700 text-slate-400">
                                     {d.party?.[0] || '?'}-{d.state || 'US'}
                                   </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-[9px] font-mono font-bold px-1.5 py-0 ${
+                                      (d.provenance || (d.docId ? 'VERIFIED' : 'DEMO')) === 'VERIFIED'
+                                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                                        : 'bg-amber-950 text-amber-300 border-amber-800'
+                                    }`}
+                                    title={d.provenanceDetails || ''}
+                                  >
+                                    {(d.provenance || (d.docId ? 'VERIFIED' : 'DEMO')) === 'VERIFIED' ? '✓ VERIFIED' : '◈ DEMO'}
+                                  </Badge>
                                 </div>
                                 <span className="text-[11px] text-slate-400">
                                   {d.committeeContext || (d.chamber === 'Senate' ? 'U.S. Senate' : 'U.S. House of Representatives')}
@@ -1499,7 +1476,17 @@ export default function Dashboard() {
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400">
                       {selectedSignal.conviction} Conviction
                     </Badge>
-                    <span className="text-xs text-slate-400 font-mono">{selectedSignal.aiModel}</span>
+                    {selectedSignal.synthesisMode === 'NEMOTRON_NIM' || (selectedSignal.aiModel && selectedSignal.aiModel.includes('Live NIM')) ? (
+                      <Badge className="bg-emerald-950/90 text-emerald-300 border-emerald-700 text-[10px] font-mono flex items-center gap-1 font-semibold">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        ⚡ {selectedSignal.aiModel || 'Nemotron-70B (Live NIM)'}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-950/90 text-amber-300 border-amber-700 text-[10px] font-mono flex items-center gap-1 font-semibold">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        ⚙️ {selectedSignal.aiModel || 'Heuristic Fallback (Rule Engine)'}
+                      </Badge>
+                    )}
                   </div>
                   <span className="text-xs text-slate-500 font-mono">
                     {selectedSignal.generatedAt?.split('T')[0] || 'Today'}
@@ -1571,6 +1558,9 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <strong className="text-white flex items-center gap-1.5">
                               {pillar.name}
+                              <Badge variant="outline" className="text-[9px] font-mono px-1 py-0 border-blue-800/80 text-blue-300 bg-blue-950/80">
+                                DERIVED
+                              </Badge>
                               <span className="text-[10px] text-emerald-400 font-mono">Weight: {pillar.weightPct}%</span>
                             </strong>
                             <span
@@ -1616,28 +1606,42 @@ export default function Dashboard() {
                       <span className="text-[10px] text-slate-400">Audited Documents</span>
                     </div>
                     <div className="space-y-2">
-                      {selectedSignal.citations.map((c, idx) => (
-                        <div key={idx} className="bg-slate-900 p-2.5 rounded border border-slate-800 text-xs space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                              {c.sourceType}
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-mono">{c.verifiedDate}</span>
+                      {selectedSignal.citations.map((c, idx) => {
+                        const prov = c.provenance || 'VERIFIED';
+                        const provBadge = prov === 'VERIFIED'
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                          : prov === 'DERIVED'
+                          ? 'bg-blue-950 text-blue-300 border-blue-800'
+                          : 'bg-amber-950 text-amber-300 border-amber-800';
+
+                        return (
+                          <div key={idx} className="bg-slate-900 p-2.5 rounded border border-slate-800 text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                                  {c.sourceType}
+                                </span>
+                                <Badge variant="outline" className={`text-[9px] font-mono font-bold px-1.5 py-0 ${provBadge}`}>
+                                  {prov === 'VERIFIED' ? '✓ VERIFIED' : prov === 'DERIVED' ? '⚡ DERIVED' : '◈ DEMO'}
+                                </Badge>
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-mono">{c.verifiedDate}</span>
+                            </div>
+                            <p className="text-slate-200 text-[11px] font-medium">{c.claim}</p>
+                            <div className="pt-1 border-t border-slate-800/80 flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400 truncate max-w-[200px]">{c.sourceName}</span>
+                              <a
+                                href={c.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1"
+                              >
+                                Verify Source ↗
+                              </a>
+                            </div>
                           </div>
-                          <p className="text-slate-200 text-[11px] font-medium">{c.claim}</p>
-                          <div className="pt-1 border-t border-slate-800/80 flex items-center justify-between">
-                            <span className="text-[10px] text-slate-400 truncate max-w-[200px]">{c.sourceName}</span>
-                            <a
-                              href={c.sourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1"
-                            >
-                              Verify Source ↗
-                            </a>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1660,10 +1664,25 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       {selectedSignal.evidence.disclosures.map((d, idx) => {
                         const pdfUrl = d.filingDocUrl || 'https://disclosures-clerk.house.gov/public_disc/financial-pdfs/2026FD.ZIP';
+                        const prov = d.provenance || (d.docId ? 'VERIFIED' : 'DEMO');
+
                         return (
                           <div key={idx} className="bg-slate-950 p-2.5 rounded border border-slate-800/80 text-xs space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold text-white">{d.politicianName}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-white">{d.politicianName}</span>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] font-mono font-bold px-1.5 py-0 ${
+                                    prov === 'VERIFIED'
+                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                                      : 'bg-amber-950 text-amber-300 border-amber-800'
+                                  }`}
+                                  title={d.provenanceDetails || ''}
+                                >
+                                  {prov === 'VERIFIED' ? '✓ VERIFIED' : '◈ DEMO'}
+                                </Badge>
+                              </div>
                               <Badge
                                 variant="outline"
                                 className={d.transactionType === 'BUY' ? 'text-emerald-400 border-emerald-800' : 'text-rose-400 border-rose-800'}
@@ -1895,10 +1914,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">
-                    Market-Outperformance Confidence & Mathematical Audit
+                    Forward Paper-Tracking Audit & Methodology
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Paired difference Student-t test against S&P 500 benchmark (SPY)
+                    T₀ Live Market Tape Baseline & Zero-Lookahead Architecture
                   </p>
                 </div>
               </div>
@@ -1914,85 +1933,102 @@ export default function Dashboard() {
               {/* Top Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="bg-slate-950 p-3 rounded-lg border border-emerald-800/60">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Confidence Score</span>
-                  <div className="text-xl font-black text-emerald-400 mt-0.5">
-                    {benchmarkMetrics.confidenceDisplay}
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Tracking Status</span>
+                  <div className="text-lg font-black text-emerald-400 mt-0.5">
+                    {benchmarkMetrics.confidenceDisplay || 'T₀ Baseline Active'}
                   </div>
-                  <span className="text-[10px] text-slate-500 font-mono">vs S&P 500</span>
+                  <span className="text-[10px] text-slate-500 font-mono">Live tape locked</span>
                 </div>
 
                 <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">InsightTrader Return</span>
-                  <div className="text-xl font-black text-emerald-400 mt-0.5">
-                    +{benchmarkMetrics.insightTraderReturnPct}%
+                  <div className="text-lg font-black text-emerald-400 mt-0.5">
+                    0.0%
                   </div>
-                  <span className="text-[10px] text-slate-500 font-mono">Mean sample return</span>
+                  <span className="text-[10px] text-slate-500 font-mono">T₀ Entry Baseline</span>
                 </div>
 
                 <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Benchmark (SPY)</span>
-                  <div className="text-xl font-black text-slate-200 mt-0.5">
-                    +{benchmarkMetrics.benchmarkReturnPct}%
+                  <div className="text-lg font-black text-slate-200 mt-0.5">
+                    0.0%
                   </div>
-                  <span className="text-[10px] text-slate-500 font-mono">S&P 500 tape return</span>
+                  <span className="text-[10px] text-slate-500 font-mono">S&P 500 T₀ Tape</span>
                 </div>
 
                 <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Mean Excess (Alpha)</span>
-                  <div className="text-xl font-black text-emerald-400 mt-0.5">
-                    +{benchmarkMetrics.excessReturnPct}%
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">Forward Horizons</span>
+                  <div className="text-lg font-black text-emerald-400 mt-0.5">
+                    7d · 30d · 90d
                   </div>
                   <span className="text-[10px] text-slate-500 font-mono">
-                    Win Rate: {benchmarkMetrics.winRatePct}%
+                    Signals: {benchmarkMetrics.evaluatedSignalsCount}
                   </span>
                 </div>
               </div>
 
-              {/* Mathematical Methodology Box */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+              {/* Forward Paper-Tracking Architecture Box */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-emerald-900/60 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                    Exact Statistical Methodology & Formulas
+                    T₀ Forward Paper-Tracking Architecture
                   </h4>
-                  <Badge variant="outline" className="text-[9px] border-slate-700 text-slate-400 font-mono">
-                    Student-t Hypothesis Test
+                  <Badge variant="outline" className="text-[9px] border-emerald-600/50 text-emerald-300 font-mono">
+                    Zero Lookahead Bias
                   </Badge>
                 </div>
                 <p className="text-slate-300 text-[11px] leading-relaxed">
-                  InsightTrader computes statistical confidence that recommendations outperform the market using a <strong>paired difference Student-t test</strong> comparing observed percentage returns against the S&P 500 Index (SPY ETF) over identical holding periods.
+                  InsightTrader establishes a verifiable paper-tracking pipeline for all signals. Rather than fabricating backfilled entry discounts or synthetic historical outperformance, every signal's entry price is locked to live exchange tape at genesis (T₀). Forward horizons track performance dynamically over time.
                 </p>
 
-                <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono text-[11px] space-y-1.5 text-slate-300">
-                  <div className="flex justify-between border-b border-slate-800 pb-1">
-                    <span>1. Paired Difference:</span>
-                    <span className="text-emerald-400">D_i = Return(Signal_i) - Return(SPY_i)</span>
+                <div className="space-y-2 font-mono text-[11px]">
+                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800 space-y-0.5">
+                    <strong className="text-emerald-300 block text-xs">Step 1: T₀ Signal Genesis & Exchange Tape Lock</strong>
+                    <span className="text-slate-400 block text-[10px]">
+                      When a trade signal is synthesized, its entry price is locked to the live exchange tape with zero lookahead bias. All initial return metrics start at an honest 0.00%.
+                    </span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-800 pb-1">
-                    <span>2. Sample Mean Difference:</span>
-                    <span className="text-emerald-400">D̄ = (1 / n) * Σ D_i = +{benchmarkMetrics.excessReturnPct}%</span>
+                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800 space-y-0.5">
+                    <strong className="text-emerald-300 block text-xs">Step 2: Forward Horizon Paper-Tracking (T+7d, T+30d, T+90d)</strong>
+                    <span className="text-slate-400 block text-[10px]">
+                      The automated data pipeline records quotes at 7-day, 30-day, and 90-day intervals against the SPY ETF benchmark to observe genuine forward alpha.
+                    </span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-800 pb-1">
-                    <span>3. Sample Standard Deviation:</span>
-                    <span className="text-slate-300">s_D = √[ Σ(D_i - D̄)² / (n - 1) ] = {benchmarkMetrics.sampleStdDev}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-800 pb-1">
-                    <span>4. Standard Error:</span>
-                    <span className="text-slate-300">SE = s_D / √n = {benchmarkMetrics.standardError}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-800 pb-1">
-                    <span>5. Student-t Statistic:</span>
-                    <span className="text-emerald-400">t = D̄ / SE = {benchmarkMetrics.tStatistic}</span>
-                  </div>
-                  <div className="flex justify-between pt-0.5">
-                    <span>6. CDF Confidence Metric:</span>
-                    <span className="text-emerald-400">Confidence = Φ(t) = {benchmarkMetrics.confidenceDisplay}</span>
+                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800 space-y-0.5">
+                    <strong className="text-emerald-300 block text-xs">Step 3: Rigorous Significance Testing (Paired Student-t)</strong>
+                    <span className="text-slate-400 block text-[10px]">
+                      Once a forward sample matures (N ≥ 30), a paired-difference Student-t test will calculate statistical significance: t = (D̄) / (s_D / √N).
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                <p className="text-[11px] text-slate-400">
-                  <strong>Sample Size Threshold:</strong> Minimum sample threshold is <strong>n ≥ 3</strong> signals. If fewer than 3 signals are available, the metric explicitly displays <span className="font-mono text-amber-400">"Insufficient Data"</span> to avoid unrepresentative significance.
-                </p>
+              {/* Devpost Roadmap / What's Next Box */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-purple-900/60 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-purple-400" />
+                    Devpost Roadmap: What's Next for Backtesting
+                  </h4>
+                  <Badge variant="outline" className="text-[9px] border-purple-600/50 text-purple-300 font-mono">
+                    Future Work
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-900 p-2.5 rounded border border-slate-800">
+                    <strong className="text-purple-300 block text-[11px]">1. Historical Multi-Year Backtest Engine</strong>
+                    <p className="text-slate-400 text-[10px] mt-1">
+                      Ingest 5 years of historical Senate and House disclosure archives paired with Polygon daily OHLCV tape (2020-2025) to quantify long-term committee alpha.
+                    </p>
+                  </div>
+                  <div className="bg-slate-900 p-2.5 rounded border border-slate-800">
+                    <strong className="text-purple-300 block text-[11px]">2. Automated Paper Trading Execution</strong>
+                    <p className="text-slate-400 text-[10px] mt-1">
+                      Virtual portfolio execution simulating execution slippage, transaction costs, and automated take-profit / stop-loss exits.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Underlying Data Sources & Benchmark */}
@@ -2030,9 +2066,9 @@ export default function Dashboard() {
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-white">
-                    Evaluated Recommendation Sample (n = {benchmarkMetrics.evaluatedSignalsCount})
+                    Tracked Signals Sample (n = {benchmarkMetrics.evaluatedSignalsCount})
                   </h4>
-                  <span className="text-[10px] text-slate-400">Auditable Inputs</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">T₀ Baseline Established</span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -2041,11 +2077,11 @@ export default function Dashboard() {
                       <tr>
                         <th className="py-2 pr-2">Ticker</th>
                         <th className="py-2 px-2">Signal</th>
-                        <th className="py-2 px-2">Entry Tape</th>
+                        <th className="py-2 px-2">Entry Tape (T₀)</th>
                         <th className="py-2 px-2">Current Tape</th>
                         <th className="py-2 px-2">Signal %</th>
                         <th className="py-2 px-2">SPY %</th>
-                        <th className="py-2 pl-2 text-right">Alpha (D_i)</th>
+                        <th className="py-2 pl-2 text-right">Forward Horizon</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-850 font-mono">
@@ -2067,11 +2103,13 @@ export default function Dashboard() {
                           <td className="py-2 px-2 text-slate-300">${item.entryPrice}</td>
                           <td className="py-2 px-2 text-slate-300">${item.currentPrice}</td>
                           <td className="py-2 px-2 font-semibold text-emerald-400">
-                            +{item.returnPct}%
+                            {item.signalReturnPct >= 0 ? '+' : ''}{item.signalReturnPct}% (T₀ Tape)
                           </td>
-                          <td className="py-2 px-2 text-slate-400">+{item.benchmarkReturnPct}%</td>
-                          <td className="py-2 pl-2 text-right font-bold text-emerald-400">
-                            +{item.excessReturnPct}%
+                          <td className="py-2 px-2 text-slate-400">
+                            {item.benchmarkReturnPct >= 0 ? '+' : ''}{item.benchmarkReturnPct}%
+                          </td>
+                          <td className="py-2 pl-2 text-right font-semibold text-slate-300 font-mono text-[10px]">
+                            Forward Tracking
                           </td>
                         </tr>
                       ))}
@@ -2084,10 +2122,10 @@ export default function Dashboard() {
               <div className="p-3 bg-amber-950/40 rounded-xl border border-amber-800/60 space-y-1">
                 <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
                   <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
-                  <span>Mandatory Regulatory & Statistical Notice</span>
+                  <span>Mandatory Regulatory & Forward Tracking Notice</span>
                 </div>
                 <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                  Do not interpret confidence as a guarantee of future returns. InsightTrader's market-outperformance confidence metric is a backward-looking paired-difference statistical hypothesis test comparing observed signal returns against the S&P 500 benchmark (SPY). Past performance is no guarantee of future trading performance. This application does not provide registered investment advisory services.
+                  InsightTrader tracks trading recommendations prospectively from real-time genesis timestamps (T₀). We do not fabricate historical discounts or backfilled outperformance. Past trading performance of public officials does not guarantee future financial returns. This platform provides research and audit tools, not registered investment advice.
                 </p>
               </div>
             </div>

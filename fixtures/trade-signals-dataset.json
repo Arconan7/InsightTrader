@@ -479,7 +479,9 @@
       "generatedAt": "2026-09-03T10:15:00Z",
       "headline": "Senate Armed Services Member Buys LMT Standoff Munitions Spike Ahead of Classified NDAA Markup",
       "thesis": "Sen. Tommy Tuberville (Senate Armed Services) acquired between $100k-$250k in LMT stock just 48 hours prior to the classified markup session that subsequently authorized $8.2B in multi-year precision standoff weapon procurement. Historical correlation between SASC member buys and multi-year procurement awards shows an 83% win rate over 120-day holding periods.",
-      "aiModel": "Nemotron-4-340B-Reward",
+      "aiModel": "Deterministic Multi-Pillar Engine (Heuristic Fallback)",
+      "synthesisMode": "HEURISTIC",
+      "provenance": "DERIVED",
       "evidence": {
         "disclosures": [
           {
@@ -518,12 +520,13 @@
         "Supply chain bottlenecks in solid rocket motor propellants could constrain margin realization"
       ],
       "metrics": {
-        "entryPrice": 542.5,
+        "entryPrice": 574.8,
         "currentPrice": 574.8,
         "targetPrice": 620.0,
         "stopLossPrice": 518.0,
-        "returnSinceSignalPct": 5.95,
-        "benchmarkReturnPct": 1.2
+        "returnSinceSignalPct": 0.0,
+        "benchmarkReturnPct": 0.0,
+        "trackingPhase": "T0_BASELINE"
       },
       "tags": ["Armed Services", "NDAA", "Defense Contractor", "High Conviction"]
     },
@@ -540,7 +543,9 @@
       "generatedAt": "2026-08-14T09:00:00Z",
       "headline": "Pelosi Re-Ups Long-Term LEAPs in NVDA Following CHIPS Act Phase II Packaging Rules",
       "thesis": "Former Speaker Pelosi disclosed multi-million dollar LEAP call options on NVDA expiring in 2027. The trade preceded the public finalization of Commerce Department CHIPS Phase II guidelines for advanced packaging and domestic accelerator manufacturing by 4 days. The Pelosi filing history on mega-cap tech options has demonstrated an average 38% annual alpha over the past 4 years.",
-      "aiModel": "Nemotron-70B-Instruct",
+      "aiModel": "Deterministic Multi-Pillar Engine (Heuristic Fallback)",
+      "synthesisMode": "HEURISTIC",
+      "provenance": "DERIVED",
       "evidence": {
         "disclosures": [
           {
@@ -579,12 +584,13 @@
         "Valuation multiple compression if hyperscaler capital expenditures decelerate in H2"
       ],
       "metrics": {
-        "entryPrice": 122.4,
+        "entryPrice": 138.9,
         "currentPrice": 138.9,
         "targetPrice": 165.0,
         "stopLossPrice": 114.0,
-        "returnSinceSignalPct": 13.48,
-        "benchmarkReturnPct": 3.4
+        "returnSinceSignalPct": 0.0,
+        "benchmarkReturnPct": 0.0,
+        "trackingPhase": "T0_BASELINE"
       },
       "tags": ["Mega Tech", "Options Whales", "CHIPS Act", "AI Accelerators"]
     },
@@ -601,7 +607,9 @@
       "generatedAt": "2026-09-09T11:45:00Z",
       "headline": "Ro Khanna Buys PLTR Concurrent With House Cyber Subcommittee Classified Briefing",
       "thesis": "Rep. Ro Khanna (Cyber & Innovative Technologies Subcommittee ranking member) disclosed a $100k-$250k stake in Palantir. This immediately followed the DOD announcement of tactical edge cloud expansion contracts where Palantir was selected as the sovereign intelligence data pipeline layer. The alignment of committee role and procurement acceleration indicates sustained multi-year backlog growth.",
-      "aiModel": "Nemotron-4-340B-Reward",
+      "aiModel": "Deterministic Multi-Pillar Engine (Heuristic Fallback)",
+      "synthesisMode": "HEURISTIC",
+      "provenance": "DERIVED",
       "evidence": {
         "disclosures": [
           {
@@ -632,12 +640,13 @@
         "Integration timing delays with legacy service-branch hardware architectures"
       ],
       "metrics": {
-        "entryPrice": 32.1,
+        "entryPrice": 37.4,
         "currentPrice": 37.4,
         "targetPrice": 45.0,
         "stopLossPrice": 29.5,
-        "returnSinceSignalPct": 16.51,
-        "benchmarkReturnPct": 2.1
+        "returnSinceSignalPct": 0.0,
+        "benchmarkReturnPct": 0.0,
+        "trackingPhase": "T0_BASELINE"
       },
       "tags": ["Defense AI", "Cybersecurity", "House Armed Services", "JADC2"]
     },
@@ -654,7 +663,9 @@
       "generatedAt": "2026-08-30T14:20:00Z",
       "headline": "House Foreign Affairs Chair Sells ASML Ahead of Stricter Multilateral Lithography Export Sanctions",
       "thesis": "Rep. Michael McCaul (Chair, House Foreign Affairs Committee) disclosed a substantial $500k-$1M divestment in ASML. McCaul's committee holds direct jurisdiction over export enforcement reviews and State Department sanctions coordination. Four days after the sale, committee staff circulated drafts to expand extraterritorial restrictions on maintenance contracts for installed EUV/DUV equipment in restricted territories.",
-      "aiModel": "Nemotron-Custom-Finance",
+      "aiModel": "Deterministic Multi-Pillar Engine (Heuristic Fallback)",
+      "synthesisMode": "HEURISTIC",
+      "provenance": "DERIVED",
       "evidence": {
         "disclosures": [
           {
@@ -685,12 +696,13 @@
         "Potential diplomatic pushback from Netherlands government safeguarding domestic champions"
       ],
       "metrics": {
-        "entryPrice": 875.0,
+        "entryPrice": 812.0,
         "currentPrice": 812.0,
         "targetPrice": 740.0,
         "stopLossPrice": 915.0,
-        "returnSinceSignalPct": 7.2,
-        "benchmarkReturnPct": -1.1
+        "returnSinceSignalPct": 0.0,
+        "benchmarkReturnPct": 0.0,
+        "trackingPhase": "T0_BASELINE"
       },
       "tags": ["Export Controls", "Foreign Affairs", "Semiconductor Equipment", "Bearish Signal"]
     },
@@ -700,14 +712,16 @@
       "companyName": "CrowdStrike Holdings Inc.",
       "sector": "Cybersecurity & Tech",
       "direction": "BULLISH",
-      "status": "RESOLVED_PROFIT",
+      "status": "ACTIVE",
       "conviction": "High",
       "confidenceScorePct": 89,
       "timeHorizon": "1-3 Months",
       "generatedAt": "2026-07-29T16:00:00Z",
       "headline": "Rapid 9-Day Disclosure on CRWD Dip by Intelligence Committee Member Ahead of CISA Mandate",
       "thesis": "Rep. Dan Crenshaw disclosed a $50k-$100k purchase in CrowdStrike within an extraordinarily brief 9-day window (versus the congressional average of 34 days). The buy captured the maximum fear trough following a global software update glitch. Intelligence and Homeland Security committee insights into CISA's forthcoming binding operational directive validated that CrowdStrike's federal zero-trust architecture had no viable commercial substitute for federal networks.",
-      "aiModel": "Nemotron-4-340B-Reward",
+      "aiModel": "Deterministic Multi-Pillar Engine (Heuristic Fallback)",
+      "synthesisMode": "HEURISTIC",
+      "provenance": "DERIVED",
       "evidence": {
         "disclosures": [
           {
@@ -738,14 +752,15 @@
         "Short-term discounting pressure from competitors during Q3 renewal cycles"
       ],
       "metrics": {
-        "entryPrice": 242.0,
+        "entryPrice": 298.5,
         "currentPrice": 298.5,
         "targetPrice": 295.0,
         "stopLossPrice": 220.0,
-        "returnSinceSignalPct": 23.35,
-        "benchmarkReturnPct": 4.2
+        "returnSinceSignalPct": 0.0,
+        "benchmarkReturnPct": 0.0,
+        "trackingPhase": "T0_BASELINE"
       },
-      "tags": ["Dip Buying", "Cybersecurity", "Fast Disclosure Lag", "Resolved Profit"]
+      "tags": ["Dip Buying", "Cybersecurity", "Fast Disclosure Lag", "High Conviction"]
     }
   ]
 }

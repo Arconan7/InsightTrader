@@ -225,5 +225,61 @@ router.get("/trump-posts", async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/nemotron/synthesize
+router.post("/nemotron/synthesize", async (req: Request, res: Response) => {
+  try {
+    const { synthesizeWithNemotron } = (await import(
+      "../../../../src/services/nemotronService.mjs"
+    )) as any;
+    const { ticker, disclosures = [], newsArticles = [], customNotes = '', apiKey, model } = req.body || {};
+    if (!ticker) {
+      return res.status(400).json({ error: "Ticker symbol is required" });
+    }
+    const dataset = getDataset();
+    const companyName = dataset.quotes?.find((q: any) => q.ticker === ticker.toUpperCase())?.companyName || `${ticker} Corp`;
+    const result = await synthesizeWithNemotron({
+      ticker,
+      companyName,
+      disclosures,
+      newsArticles,
+      customNotes,
+      apiKey,
+      model,
+    });
+    res.json({ signal: result, ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: "Nemotron synthesis failed", message: err.message });
+  }
+});
+
+// GET /api/nemotron/status
+router.get("/nemotron/status", async (_req: Request, res: Response) => {
+  try {
+    const { checkNemotronStatus } = (await import(
+      "../../../../src/services/nemotronService.mjs"
+    )) as any;
+    res.json(checkNemotronStatus());
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch Nemotron status", message: err.message });
+  }
+});
+
+// GET /api/real/disclosures
+router.get("/real/disclosures", (req: Request, res: Response) => {
+  const dataset = getDataset();
+  const ticker = String(req.query.ticker || "").toUpperCase();
+  let results = dataset.disclosures || [];
+  if (ticker) {
+    results = results.filter((d: any) => (d.ticker || "").toUpperCase() === ticker);
+  }
+  res.json(results);
+});
+
+// GET /api/real/news
+router.get("/real/news", (_req: Request, res: Response) => {
+  const dataset = getDataset();
+  res.json(dataset.news || []);
+});
+
 export default router;
 

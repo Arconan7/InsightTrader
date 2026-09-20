@@ -83,7 +83,9 @@ Synthesize a readable, source-linked trade signal. Output raw JSON only.`;
           return {
             success: true,
             source: 'nvidia-nim',
+            synthesisMode: 'NEMOTRON_NIM',
             model,
+            note: 'Synthesized via live NVIDIA NIM Llama 3.1 Nemotron API endpoint.',
             signal: formatSynthesizedSignal(parsed, ticker, companyName, disclosures, newsArticles, model),
           };
         }
@@ -96,12 +98,15 @@ Synthesize a readable, source-linked trade signal. Output raw JSON only.`;
     }
   }
 
-  // Fallback: Local deterministic synthesis engine (operates when offline or API key pending)
+  // Fallback: Local deterministic heuristic engine (explicitly labeled when offline or API key pending)
   return {
     success: true,
-    source: 'nemotron-local-engine',
-    model: `${model} (Local Fallback Mode)`,
-    note: activeKey ? 'NVIDIA API call failed; generated via local Nemotron heuristic engine.' : 'No NVIDIA_API_KEY detected; generated via local Nemotron heuristic engine. Provide an API key to enable live NIM endpoints.',
+    source: 'heuristic-fallback',
+    synthesisMode: 'HEURISTIC',
+    model: 'Heuristic Fallback (Deterministic Rule Engine)',
+    note: activeKey
+      ? 'NVIDIA NIM API call was unreachable; generated via deterministic multi-pillar heuristic fallback.'
+      : 'No NVIDIA_API_KEY detected in environment; generated via deterministic multi-pillar heuristic fallback. Configure an NVIDIA API key to activate live NIM inference.',
     signal: generateLocalHeuristicSignal(ticker, companyName, disclosures, newsArticles, customNotes),
   };
 }
@@ -134,7 +139,9 @@ function formatSynthesizedSignal(parsed, ticker, companyName, disclosures, newsA
     generatedAt: new Date().toISOString(),
     headline: parsed.headline || `Nemotron Synthesized Signal for ${ticker.toUpperCase()}`,
     thesis: parsed.thesis,
-    aiModel: model,
+    aiModel: `${model} (Live NIM)`,
+    synthesisMode: 'NEMOTRON_NIM',
+    provenance: 'DERIVED',
     evidence: {
       disclosures: disclosures.map(d => ({
         disclosureId: d.id,
@@ -162,7 +169,7 @@ function formatSynthesizedSignal(parsed, ticker, companyName, disclosures, newsA
       returnSinceSignalPct: 0.0,
       benchmarkReturnPct: 0.0,
     },
-    tags: ['Nemotron Synthesized', parsed.direction || 'BULLISH', 'STOCK Act Analysis'],
+    tags: ['NVIDIA Nemotron', parsed.direction || 'BULLISH', 'STOCK Act Analysis', 'Live NIM'],
   };
 }
 
@@ -177,10 +184,10 @@ function generateLocalHeuristicSignal(ticker, companyName, disclosures, newsArti
   const primaryFiler = disclosures[0]?.politicianName || 'Key Congressional Members';
   const primaryNews = newsArticles[0]?.headline || 'federal legislative updates and appropriations milestones';
 
-  const thesis = `Nemotron correlation models identify significant alignment between ${disclosures.length} congressional disclosure(s) and recent regulatory catalysts in ${t}. Notably, filings by ${primaryFiler} coincide with ${primaryNews}. The historical latency between committee disclosures and market absorption creates favorable asymmetric risk-reward over the medium term.`;
+  const thesis = `Multi-pillar heuristic correlation identifies directional alignment between ${disclosures.length} congressional disclosure(s) and recent regulatory catalysts in ${t}. Filings by ${primaryFiler} coincide with ${primaryNews}. (Note: Synthesized via deterministic rule engine fallback; live NVIDIA NIM inference requires configured NVIDIA_API_KEY).`;
 
   return {
-    id: `nemotron-sig-${Date.now()}`,
+    id: `heuristic-sig-${Date.now()}`,
     ticker: t,
     companyName: companyName || `${t} Corporation`,
     sector: inferSector(t),
@@ -192,7 +199,9 @@ function generateLocalHeuristicSignal(ticker, companyName, disclosures, newsArti
     generatedAt: new Date().toISOString(),
     headline: `${direction === 'BULLISH' ? 'Bullish Accumulation' : 'Defensive Divestment'} Signal in ${t} Correlated with ${primaryFiler}`,
     thesis,
-    aiModel: DEFAULT_MODEL,
+    aiModel: 'Heuristic Fallback (Deterministic Rule Engine)',
+    synthesisMode: 'HEURISTIC',
+    provenance: 'DERIVED',
     evidence: {
       disclosures: disclosures.map(d => ({
         disclosureId: d.id,
@@ -226,7 +235,7 @@ function generateLocalHeuristicSignal(ticker, companyName, disclosures, newsArti
       returnSinceSignalPct: 0.0,
       benchmarkReturnPct: 0.0,
     },
-    tags: ['Nemotron Synthesized', direction, 'Institutional Flow'],
+    tags: ['Heuristic Fallback', direction, 'Institutional Flow'],
   };
 }
 
@@ -250,3 +259,16 @@ function inferSector(ticker) {
   return map[ticker.toUpperCase()] || 'Diversified Equities';
 }
 
+export function checkNemotronStatus() {
+  const activeKey = process.env.NVIDIA_API_KEY || process.env.NEMOTRON_API_KEY;
+  return {
+    configured: Boolean(activeKey),
+    maskedKey: activeKey ? `${activeKey.slice(0, 6)}...${activeKey.slice(-4)}` : null,
+    defaultModel: DEFAULT_MODEL,
+    endpoint: NVIDIA_NIM_URL,
+    status: activeKey ? 'LIVE_NIM_READY' : 'OFFLINE_HEURISTIC_FALLBACK',
+    description: activeKey
+      ? 'NVIDIA NIM active with Llama 3.1 Nemotron 70B inference endpoint'
+      : 'Deterministic multi-pillar rule engine fallback active (No NVIDIA_API_KEY detected)',
+  };
+}

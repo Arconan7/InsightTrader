@@ -1,5 +1,6 @@
 export type Chamber = 'Senate' | 'House';
 export type PoliticalParty = 'Democrat' | 'Republican' | 'Independent';
+export type DataProvenance = 'VERIFIED' | 'DERIVED' | 'DEMO';
 
 export interface Politician {
   id: string;
@@ -15,6 +16,8 @@ export interface Politician {
   estimatedWinRatePct: number;
   alphaVsSp500Pct: number;
   lastActiveDate: string;
+  provenance?: DataProvenance;
+  provenanceDetails?: string;
 }
 
 export type TransactionType = 'BUY' | 'SELL' | 'EXCHANGE';
@@ -36,6 +39,8 @@ export interface PublicDisclosure {
   filingDocUrl: string;
   filingSource: 'House Clerk' | 'Senate Financial Disclosures';
   notes?: string;
+  provenance?: DataProvenance;
+  provenanceDetails?: string;
 }
 
 export type NewsCategory =
@@ -72,6 +77,8 @@ export interface Citation {
   sourceUrl: string;
   verifiedDate: string;
   badgeText: string;
+  provenance?: DataProvenance;
+  provenanceDetails?: string;
 }
 
 export interface SignalEvidence {
@@ -83,6 +90,7 @@ export interface SignalEvidence {
     amountBracket: string;
     committeeContext: string;
     filingDocUrl?: string;
+    provenance?: DataProvenance;
   }>;
   newsCatalysts: Array<{
     newsId: string;
@@ -91,6 +99,7 @@ export interface SignalEvidence {
     publishedAt: string;
     relevanceNote: string;
     articleUrl?: string;
+    provenance?: DataProvenance;
   }>;
   legislativeHooks: string[];
 }
@@ -102,6 +111,8 @@ export interface SignalPriceMetrics {
   stopLossPrice: number;
   returnSinceSignalPct: number;
   benchmarkReturnPct: number; // e.g. S&P 500 or sector ETF
+  trackingPhase?: string;
+  observationHorizonDays?: number;
 }
 
 export interface TradeSignal {
@@ -117,7 +128,10 @@ export interface TradeSignal {
   generatedAt: string;
   headline: string;
   thesis: string;
-  aiModel: 'Nemotron-70B-Instruct' | 'Nemotron-4-340B-Reward' | 'Nemotron-Custom-Finance';
+  aiModel: string;
+  synthesisMode?: 'NEMOTRON_NIM' | 'HEURISTIC';
+  synthesisNote?: string;
+  provenance?: DataProvenance;
   evidence: SignalEvidence;
   citations?: Citation[];
   keyRisks: string[];

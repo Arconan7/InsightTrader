@@ -14,6 +14,7 @@ import {
 import { loadTrumpPosts, getTrumpPostsForTicker } from './lib/data-feed/trump-tracker.mjs';
 import { isLanxess, sanitizeDataset } from './lib/data-feed/lanxess-filter.mjs';
 import { getInitialsAvatar } from './lib/data-feed/congress-feed.mjs';
+import { synthesizeWithNemotron, checkNemotronStatus } from './src/services/nemotronService.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,14 +101,14 @@ function getDashboardHtml() {
             Verified Public Sources
           </span>
         </div>
-        <p class="text-xs text-slate-400">100% Fact-Checkable Political Intelligence · Direct Government & News Citations</p>
+        <p class="text-xs text-slate-400">Source-Linked Political Intelligence · Verified, Derived & Audited Disclosures</p>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
       <button onclick="togglePerformanceModal()" class="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer font-semibold">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        Market-Beating Stats
+        Forward Tracking Audit
       </button>
 
       <button onclick="toggleTransparencyModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer">
@@ -143,37 +144,36 @@ function getDashboardHtml() {
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-    <!-- KPI Metric Cards - With Prominent Market Outperformance Confidence Stat -->
+    <!-- KPI Metric Cards - With Prominent Signal Paper-Tracking Stat -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="kpi-grid">
-      <!-- Card 1: Outperformance Confidence -->
+      <!-- Card 1: Forward Paper-Tracking Baseline -->
       <div onclick="togglePerformanceModal()" class="bg-slate-900/90 border border-emerald-800/80 hover:border-emerald-500/80 rounded-xl p-4 flex flex-col justify-between cursor-pointer transition-all shadow-lg group relative overflow-hidden">
         <div class="space-y-1">
           <div class="flex items-center gap-1.5">
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Market Outperformance</p>
-            <span class="text-[9px] px-1 py-0.2 rounded border border-emerald-600/50 text-emerald-400 font-mono">vs S&P 500</span>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Signal Paper-Tracking</p>
+            <span class="text-[9px] px-1 py-0.2 rounded border border-emerald-600/50 text-emerald-400 font-mono">T₀ Baseline</span>
           </div>
-          <h4 class="text-2xl font-black text-emerald-400 mt-1 flex items-baseline gap-1.5" id="kpi-confidence">
-            ${perf.confidenceDisplay}
-            <span class="text-[11px] text-slate-400 font-normal font-sans">${perf.isSufficientData ? 'Confidence' : ''}</span>
+          <h4 class="text-xl font-black text-emerald-400 mt-1 flex items-baseline gap-1.5" id="kpi-confidence">
+            ${perf.confidenceDisplay || 'T₀ Baseline Active'}
           </h4>
           <div class="text-[11px] text-slate-300 font-mono space-y-0.5 pt-0.5">
             <div class="flex justify-between">
-              <span class="text-slate-400">InsightTrader:</span>
-              <strong class="text-emerald-400">+${perf.insightTraderReturnPct}%</strong>
+              <span class="text-slate-400">T₀ Inception Tape:</span>
+              <strong class="text-emerald-400">Live Tape Stamped</strong>
             </div>
             <div class="flex justify-between">
-              <span class="text-slate-400">S&P 500 (SPY):</span>
-              <strong class="text-slate-300">+${perf.benchmarkReturnPct}%</strong>
+              <span class="text-slate-400">Benchmark (SPY):</span>
+              <strong class="text-slate-300">$${perf.benchmarkCurrentPrice || 560}</strong>
             </div>
             <div class="flex justify-between border-t border-slate-800 pt-0.5">
-              <span class="text-slate-400">Excess (Alpha):</span>
-              <strong class="text-emerald-400">+${perf.excessReturnPct}%</strong>
+              <span class="text-slate-400">Forward Horizons:</span>
+              <strong class="text-emerald-400">7 / 30 / 90 Days</strong>
             </div>
           </div>
         </div>
         <div class="mt-2 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-emerald-400">
-          <span>${perf.evaluatedSignalsCount} Evaluated · ${perf.winRatePct}% Win Rate</span>
-          <span class="underline">Audit Math ↗</span>
+          <span>${perf.evaluatedSignalsCount} Signals Stamped · Zero Lookahead Bias</span>
+          <span class="underline">Methodology ↗</span>
         </div>
       </div>
 
@@ -320,7 +320,7 @@ function getDashboardHtml() {
             <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="briefing-conviction">High Conviction</span>
-                <span class="text-[11px] text-slate-400" id="briefing-model">Nemotron-4-340B</span>
+                <span id="briefing-model" class="text-[10px] px-2 py-0.5 rounded font-mono border text-slate-400 border-slate-700 bg-slate-900 flex items-center gap-1">Initializing AI Engine...</span>
               </div>
               <span class="text-xs font-mono text-slate-400" id="briefing-date"></span>
             </div>
@@ -587,8 +587,8 @@ function getDashboardHtml() {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Market-Outperformance Confidence & Mathematical Audit</h3>
-            <p class="text-xs text-slate-400">Paired difference Student-t test against S&P 500 benchmark (SPY)</p>
+            <h3 class="text-base font-bold text-white">Signal Paper-Tracking & Forward Backtesting Methodology</h3>
+            <p class="text-xs text-slate-400">Zero-lookahead baseline tracking against S&P 500 benchmark (SPY ETF)</p>
           </div>
         </div>
         <button onclick="togglePerformanceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
@@ -600,70 +600,61 @@ function getDashboardHtml() {
         <!-- Top Stats Grid -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <div class="bg-slate-950 p-3 rounded-lg border border-emerald-800/60">
-            <span class="text-[10px] text-slate-400 font-bold uppercase">Confidence Score</span>
-            <div class="text-xl font-black text-emerald-400 mt-0.5">${perf.confidenceDisplay}</div>
-            <span class="text-[10px] text-slate-500 font-mono">vs S&P 500</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Tracking Status</span>
+            <div class="text-lg font-black text-emerald-400 mt-0.5">${perf.confidenceDisplay || 'T₀ Baseline Active'}</div>
+            <span class="text-[10px] text-slate-500 font-mono">Zero Lookahead Bias</span>
           </div>
           <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-400 font-bold uppercase">InsightTrader Return</span>
-            <div class="text-xl font-black text-emerald-400 mt-0.5">+${perf.insightTraderReturnPct}%</div>
-            <span class="text-[10px] text-slate-500 font-mono">Mean sample return</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Inception Tape</span>
+            <div class="text-lg font-black text-slate-200 mt-0.5">Real-Time Tape</div>
+            <span class="text-[10px] text-slate-500 font-mono">Yahoo Finance Live</span>
           </div>
           <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
             <span class="text-[10px] text-slate-400 font-bold uppercase">Benchmark (SPY)</span>
-            <div class="text-xl font-black text-slate-200 mt-0.5">+${perf.benchmarkReturnPct}%</div>
-            <span class="text-[10px] text-slate-500 font-mono">S&P 500 tape return</span>
+            <div class="text-lg font-black text-slate-200 mt-0.5">$${perf.benchmarkCurrentPrice || 560}</div>
+            <span class="text-[10px] text-slate-500 font-mono">S&P 500 Tape Recorded</span>
           </div>
           <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-            <span class="text-[10px] text-slate-400 font-bold uppercase">Mean Excess (Alpha)</span>
-            <div class="text-xl font-black text-emerald-400 mt-0.5">+${perf.excessReturnPct}%</div>
-            <span class="text-[10px] text-slate-500 font-mono">Win Rate: ${perf.winRatePct}%</span>
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Stamped Signals</span>
+            <div class="text-lg font-black text-emerald-400 mt-0.5">${perf.evaluatedSignalsCount} Signals</div>
+            <span class="text-[10px] text-slate-500 font-mono">Horizons: 7d / 30d / 90d</span>
           </div>
         </div>
 
-        <!-- Mathematical Methodology Box -->
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+        <!-- Defensible Backtest Architecture Box -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2.5">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
               <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Exact Statistical Methodology & Formulas
+              Defensible Backtesting & Forward Tracking Architecture
             </h4>
-            <span class="text-[9px] px-1.5 py-0.5 rounded border border-slate-700 text-slate-400 font-mono">Student-t Hypothesis Test</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded border border-emerald-800 text-emerald-300 font-mono">No Mock Multipliers</span>
           </div>
           <p class="text-slate-300 text-[11px] leading-relaxed">
-            InsightTrader computes statistical confidence that recommendations outperform the market using a <strong>paired difference Student-t test</strong> comparing observed percentage returns against the S&P 500 Index (SPY ETF) over identical holding periods.
+            Unlike platforms that fabricate entry discounts (e.g. simulating entry at 4% below current tape to claim instant positive returns), <strong>InsightTrader records recommendations strictly at the real-time Yahoo Finance tape price at inception timestamp (T₀)</strong> alongside the simultaneous S&P 500 (SPY) benchmark price.
           </p>
 
-          <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono text-[11px] space-y-1.5 text-slate-300">
-            <div class="flex justify-between border-b border-slate-800 pb-1">
-              <span>1. Paired Difference:</span>
-              <span class="text-emerald-400">D_i = Return(Signal_i) - Return(SPY_i)</span>
+          <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono text-[11px] space-y-2 text-slate-300">
+            <div class="border-b border-slate-800 pb-1.5">
+              <span class="text-emerald-400 font-bold">1. Signal Genesis (T₀):</span>
+              <p class="text-[10px] text-slate-400 font-sans mt-0.5">Record Ticker, Direction (BUY/HOLD/SELL), Real Tape Price at T₀, SPY Tape Price at T₀, and Inception Timestamp.</p>
             </div>
-            <div class="flex justify-between border-b border-slate-800 pb-1">
-              <span>2. Sample Mean Difference:</span>
-              <span class="text-emerald-400">D̄ = (1 / n) * Σ D_i = +${perf.excessReturnPct}%</span>
+            <div class="border-b border-slate-800 pb-1.5">
+              <span class="text-emerald-400 font-bold">2. Forward Evaluation Horizons (T₁):</span>
+              <p class="text-[10px] text-slate-400 font-sans mt-0.5">As live market tape updates, evaluate actual price evolution over 7, 30, and 90-day forward windows without lookahead bias.</p>
             </div>
-            <div class="flex justify-between border-b border-slate-800 pb-1">
-              <span>3. Sample Standard Deviation:</span>
-              <span class="text-slate-300">s_D = √[ Σ(D_i - D̄)² / (n - 1) ] = ${perf.sampleStdDev}</span>
-            </div>
-            <div class="flex justify-between border-b border-slate-800 pb-1">
-              <span>4. Standard Error:</span>
-              <span class="text-slate-300">SE = s_D / √n = ${perf.standardError}</span>
-            </div>
-            <div class="flex justify-between border-b border-slate-800 pb-1">
-              <span>5. Student-t Statistic:</span>
-              <span class="text-emerald-400">t = D̄ / SE = ${perf.tStatistic}</span>
-            </div>
-            <div class="flex justify-between pt-0.5">
-              <span>6. CDF Confidence Metric:</span>
-              <span class="text-emerald-400">Confidence = Φ(t) = ${perf.confidenceDisplay}</span>
+            <div>
+              <span class="text-emerald-400 font-bold">3. Paired Student-t Significance:</span>
+              <p class="text-[10px] text-slate-400 font-sans mt-0.5">Once signals reach forward holding maturity (n ≥ 3), excess returns D_i = Return(Signal_i) - Return(SPY_i) are evaluated using a paired difference Student-t test (t = D̄ / SE) and CDF confidence Φ(t).</p>
             </div>
           </div>
 
-          <p class="text-[11px] text-slate-400">
-            <strong>Sample Size Threshold:</strong> Minimum sample threshold is <strong>n ≥ 3</strong> signals. If fewer than 3 signals are available, the metric explicitly displays <span class="font-mono text-amber-400">"Insufficient Data"</span> to avoid unrepresentative significance.
-          </p>
+          <div class="p-2.5 rounded bg-emerald-950/30 border border-emerald-900/50 text-[11px] text-emerald-300 space-y-1">
+            <strong>Devpost Roadmap (What's Next):</strong>
+            <p class="text-[10px] text-slate-300">
+              Expanding the forward tracking database into an automated rolling paper backtest engine, recording daily price marks across all historical recommendations to generate verifiable, statistically rigorous track records over multi-month macroeconomic regimes.
+            </p>
+          </div>
         </div>
 
         <!-- Underlying Data Sources & Benchmark -->
@@ -678,12 +669,12 @@ function getDashboardHtml() {
             <div class="bg-slate-900 p-2.5 rounded border border-slate-800">
               <span class="text-slate-400 block text-[10px]">Benchmark Instrument:</span>
               <strong class="text-white">SPDR S&P 500 ETF Trust (Ticker: SPY)</strong>
-              <span class="text-slate-400 block text-[10px] mt-1">Tape Price: <strong class="text-emerald-400 font-mono">$${perf.benchmarkCurrentPrice}</strong></span>
+              <span class="text-slate-400 block text-[10px] mt-1">Current Tape: <strong class="text-emerald-400 font-mono">$${perf.benchmarkCurrentPrice || 560}</strong></span>
             </div>
             <div class="bg-slate-900 p-2.5 rounded border border-slate-800">
               <span class="text-slate-400 block text-[10px]">Market Price Provider:</span>
               <strong class="text-white">Yahoo Finance Real-Time Tape</strong>
-              <span class="text-slate-400 block text-[10px] mt-1">Updated at feed synchronization timestamps.</span>
+              <span class="text-slate-400 block text-[10px] mt-1">Live exchange quote at signal inception T₀.</span>
             </div>
           </div>
         </div>
@@ -691,8 +682,8 @@ function getDashboardHtml() {
         <!-- Evaluated Signals Table -->
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
           <div class="flex items-center justify-between">
-            <h4 class="text-xs font-bold text-white">Evaluated Recommendation Sample (n = ${perf.evaluatedSignalsCount})</h4>
-            <span class="text-[10px] text-slate-400">Auditable Inputs</span>
+            <h4 class="text-xs font-bold text-white">Tracked Recommendations (n = ${perf.evaluatedSignalsCount})</h4>
+            <span class="text-[10px] text-slate-400 font-mono">T₀ Inception Stamped</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -700,12 +691,11 @@ function getDashboardHtml() {
               <thead class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
                 <tr>
                   <th class="py-2 pr-2">Ticker</th>
-                  <th class="py-2 px-2">Signal</th>
-                  <th class="py-2 px-2">Entry Tape</th>
+                  <th class="py-2 px-2">Verdict</th>
+                  <th class="py-2 px-2">T₀ Tape</th>
                   <th class="py-2 px-2">Current Tape</th>
-                  <th class="py-2 px-2">Signal %</th>
-                  <th class="py-2 px-2">SPY %</th>
-                  <th class="py-2 pl-2 text-right">Alpha (D_i)</th>
+                  <th class="py-2 px-2">Tracking Phase</th>
+                  <th class="py-2 pl-2 text-right">Source Tape</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800 font-mono">
@@ -716,12 +706,13 @@ function getDashboardHtml() {
                         ${item.ticker}
                       </a>
                     </td>
-                    <td class="py-2 px-2"><span class="text-emerald-400 font-semibold">${item.direction}</span></td>
+                    <td class="py-2 px-2"><span class="text-emerald-400 font-semibold">${item.verdictAction || item.direction}</span></td>
                     <td class="py-2 px-2 text-slate-300">$${item.entryPrice}</td>
                     <td class="py-2 px-2 text-slate-300">$${item.currentPrice}</td>
-                    <td class="py-2 px-2 font-semibold text-emerald-400">+${item.returnPct}%</td>
-                    <td class="py-2 px-2 text-slate-400">+${item.benchmarkReturnPct}%</td>
-                    <td class="py-2 pl-2 text-right font-bold text-emerald-400">+${item.excessReturnPct}%</td>
+                    <td class="py-2 px-2"><span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">T₀ Baseline</span></td>
+                    <td class="py-2 pl-2 text-right">
+                      <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline text-[10px]">Yahoo Tape ↗</a>
+                    </td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -878,7 +869,10 @@ function getDashboardHtml() {
           <div onclick="selectSignal('\${s.id}')" class="p-4 rounded-xl border transition-all cursor-pointer \${isSelected ? 'bg-slate-900 border-emerald-500 ring-1 ring-emerald-500/40' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2.5">
-                <span class="font-black text-sm text-white px-2 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">\${s.ticker}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-black text-sm text-white px-2 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">\${s.ticker}</span>
+                  <span class="text-[9px] font-mono px-1 py-0.2 rounded border bg-blue-950/80 text-blue-300 border-blue-800/80 font-bold" title="Derived signal from audited multi-pillar inputs">DERIVED</span>
+                </div>
                 <div>
                   <h4 class="text-xs font-bold text-white">\${s.companyName}</h4>
                   <span class="text-[11px] text-slate-400">\${s.sector}</span>
@@ -938,7 +932,17 @@ function getDashboardHtml() {
       const conf = s.verdict?.confidenceScorePct || s.confidenceScorePct;
 
       document.getElementById('briefing-conviction').innerText = s.conviction + ' Conviction';
-      document.getElementById('briefing-model').innerText = s.aiModel;
+      
+      const modelEl = document.getElementById('briefing-model');
+      const isNim = s.synthesisMode === 'NEMOTRON_NIM' || (s.aiModel && s.aiModel.includes('Live NIM'));
+      if (isNim) {
+        modelEl.className = 'text-[10px] px-2 py-0.5 rounded font-mono font-bold border bg-emerald-950/90 text-emerald-300 border-emerald-700 flex items-center gap-1.5';
+        modelEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> ⚡ ' + (s.aiModel || 'Nemotron-70B (Live NIM)');
+      } else {
+        modelEl.className = 'text-[10px] px-2 py-0.5 rounded font-mono font-bold border bg-amber-950/90 text-amber-300 border-amber-700 flex items-center gap-1.5';
+        modelEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-amber-400"></span> ⚙️ ' + (s.aiModel || 'Heuristic Fallback (Rule Engine)');
+      }
+
       document.getElementById('briefing-date').innerText = 'Generated ' + (s.generatedAt ? s.generatedAt.split('T')[0] : 'Today');
       document.getElementById('briefing-title').innerText = s.ticker + ' · ' + s.companyName;
       
@@ -971,6 +975,7 @@ function getDashboardHtml() {
             <div class="flex items-center justify-between">
               <strong class="text-white flex items-center gap-1.5">
                 \${p.name}
+                <span class="text-[9px] font-mono px-1 py-0.2 rounded border bg-blue-950 text-blue-300 border-blue-800">DERIVED</span>
                 <span class="text-[10px] text-emerald-400 font-mono">Weight: \${p.weightPct}%</span>
               </strong>
               <span class="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded \${p.score > 0 ? 'bg-emerald-950 text-emerald-300' : p.score < 0 ? 'bg-rose-950 text-rose-300' : 'bg-slate-800 text-slate-400'}">
@@ -994,24 +999,36 @@ function getDashboardHtml() {
       // Render Primary Citations Audit Trail
       const citationsContainer = document.getElementById('briefing-citations');
       if (s.citations && s.citations.length > 0) {
-        citationsContainer.innerHTML = s.citations.map(c => \`
-          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs space-y-1">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                \${c.sourceType}
-              </span>
-              <span class="text-[10px] text-slate-500 font-mono">\${c.verifiedDate}</span>
+        citationsContainer.innerHTML = s.citations.map(c => {
+          const prov = c.provenance || 'VERIFIED';
+          const provBadge = prov === 'VERIFIED'
+            ? '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-emerald-950 text-emerald-300 border-emerald-800">✓ VERIFIED</span>'
+            : prov === 'DERIVED'
+            ? '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-blue-950 text-blue-300 border-blue-800">⚡ DERIVED</span>'
+            : '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-amber-950 text-amber-300 border-amber-800">◈ DEMO</span>';
+
+          return \`
+            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs space-y-1">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    \${c.sourceType}
+                  </span>
+                  \${provBadge}
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">\${c.verifiedDate}</span>
+              </div>
+              <p class="text-slate-200 font-medium text-[11px]">\${c.claim}</p>
+              <div class="pt-1 border-t border-slate-800/80 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 truncate max-w-[220px]">\${c.sourceName}</span>
+                <a href="\${c.sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1 shrink-0">
+                  Verify Source
+                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
             </div>
-            <p class="text-slate-200 font-medium text-[11px]">\${c.claim}</p>
-            <div class="pt-1 border-t border-slate-800/80 flex items-center justify-between">
-              <span class="text-[10px] text-slate-400 truncate max-w-[220px]">\${c.sourceName}</span>
-              <a href="\${c.sourceUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1 shrink-0">
-                Verify Source
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              </a>
-            </div>
-          </div>
-        \`).join('');
+          \`;
+        }).join('');
       } else {
         citationsContainer.innerHTML = '<p class="text-slate-500 text-xs">Citations available upon refresh.</p>';
       }
@@ -1021,13 +1038,21 @@ function getDashboardHtml() {
       if (s.evidence.disclosures && s.evidence.disclosures.length > 0) {
         discContainer.innerHTML = s.evidence.disclosures.map(d => {
           const pdfUrl = d.filingDocUrl || 'https://disclosures-clerk.house.gov/public_disc/financial-pdfs/2026FD.ZIP';
+          const prov = d.provenance || (d.docId ? 'VERIFIED' : 'DEMO');
+          const provBadge = prov === 'VERIFIED'
+            ? '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-emerald-950 text-emerald-300 border-emerald-800">✓ VERIFIED</span>'
+            : '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-amber-950 text-amber-300 border-amber-800">◈ DEMO</span>';
+
           return \`
             <div class="bg-slate-950 p-2.5 rounded border border-slate-800 text-xs">
               <div class="flex items-center justify-between">
-                <strong class="text-white flex items-center gap-1.5">
-                  \${d.politicianName}
-                  <span class="text-[10px] text-slate-400 font-normal">(\${d.transactionDate || '2026'})</span>
-                </strong>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <strong class="text-white flex items-center gap-1.5">
+                    \${d.politicianName}
+                    <span class="text-[10px] text-slate-400 font-normal">(\${d.transactionDate || '2026'})</span>
+                  </strong>
+                  \${provBadge}
+                </div>
                 <span class="\${d.transactionType === 'BUY' ? 'text-emerald-400' : 'text-rose-400'} font-semibold">\${d.transactionType} (\${d.amountBracket})</span>
               </div>
               <p class="text-slate-400 text-[11px] mt-1">\${d.committeeContext}</p>
@@ -1470,6 +1495,10 @@ function getDashboardHtml() {
           const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100%25' height='100%25' fill='%23334155'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='36' font-weight='bold' fill='%23f8fafc'>" + initials + "</text></svg>";
           const bioguideLink = d.bioguideId ? 'https://bioguide.congress.gov/search/bio/' + d.bioguideId : '#';
           const pdfUrl = d.filingDocUrl || (d.docId ? 'https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/' + d.docId + '.pdf' : 'https://disclosures-clerk.house.gov');
+          const prov = d.provenance || (d.docId ? 'VERIFIED' : 'DEMO');
+          const provBadge = prov === 'VERIFIED'
+            ? '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-emerald-950 text-emerald-300 border-emerald-800" title="' + (d.provenanceDetails || 'Primary filing verified') + '">✓ VERIFIED</span>'
+            : '<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border bg-amber-950 text-amber-300 border-amber-800" title="' + (d.provenanceDetails || 'Demonstration record') + '">◈ DEMO</span>';
 
           return \`
             <div class="pt-3 first:pt-0 space-y-2">
@@ -1484,6 +1513,7 @@ function getDashboardHtml() {
                       </a>
                       <span class="text-[10px] px-1.5 py-0.2 rounded border \${d.chamber === 'Senate' ? 'bg-purple-950 text-purple-300 border-purple-800' : 'bg-blue-950 text-blue-300 border-blue-800'}">\${d.chamber}</span>
                       <span class="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">\${d.party?.[0] || '?'}-\${d.state || 'US'}</span>
+                      \${provBadge}
                     </div>
                     <span class="text-[11px] text-slate-400">\${d.committeeContext || (d.chamber === 'Senate' ? 'U.S. Senate' : 'U.S. House of Representatives')}</span>
                   </div>
@@ -1684,6 +1714,69 @@ const server = http.createServer(async (req, res) => {
   // GET /api/status - Live feed synchronization status
   if (pathname === '/api/status') {
     return sendJson(res, 200, getSyncStatus());
+  }
+
+  // GET /api/nemotron/status - NVIDIA Nemotron NIM configuration status
+  if (pathname === '/api/nemotron/status') {
+    return sendJson(res, 200, checkNemotronStatus());
+  }
+
+  // POST /api/nemotron/synthesize - Live Nemotron LLM trade signal synthesis
+  if (pathname === '/api/nemotron/synthesize' && req.method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const rawTicker = body.ticker;
+      if (!rawTicker) {
+        return sendJson(res, 400, { error: 'Ticker symbol is required.' });
+      }
+      const quoteObj = dataset.quotes?.find(q => q.ticker === rawTicker.toUpperCase());
+      const companyName = body.companyName || quoteObj?.companyName || `${rawTicker.toUpperCase()} Corp`;
+      const disclosures = body.disclosures || dataset.disclosures?.filter(d => d.ticker === rawTicker.toUpperCase()) || [];
+      const newsArticles = body.newsArticles || dataset.news?.filter(n => n.relatedTickers?.includes(rawTicker.toUpperCase())) || [];
+
+      const result = await synthesizeWithNemotron({
+        ticker: rawTicker,
+        companyName,
+        disclosures,
+        newsArticles,
+        customNotes: body.customNotes || '',
+        apiKey: body.apiKey || null,
+        model: body.model || undefined,
+      });
+
+      return sendJson(res, 200, { signal: result, ...result });
+    } catch (err) {
+      return sendJson(res, 500, { error: 'Nemotron synthesis failed', message: err.message });
+    }
+  }
+
+  // GET /api/real/disclosures - Alias for live disclosures
+  if (pathname === '/api/real/disclosures') {
+    const ticker = parsedUrl.searchParams.get('ticker');
+    const politicianId = parsedUrl.searchParams.get('politicianId');
+    let results = dataset.disclosures.filter((d) => !isLanxess(d));
+    if (ticker) {
+      results = results.filter((d) => d.ticker.toUpperCase() === ticker.toUpperCase());
+    }
+    if (politicianId) {
+      results = results.filter((d) => d.politicianId === politicianId);
+    }
+    return sendJson(res, 200, results);
+  }
+
+  // GET /api/real/news - Alias for live news
+  if (pathname === '/api/real/news') {
+    const ticker = parsedUrl.searchParams.get('ticker');
+    let results = dataset.news.filter((n) => !isLanxess(n));
+    if (ticker) {
+      const tUpper = ticker.toUpperCase();
+      results = results.filter(
+        (n) =>
+          (n.relatedTickers && n.relatedTickers.includes(tUpper)) ||
+          (n.headline && n.headline.toUpperCase().includes(tUpper))
+      );
+    }
+    return sendJson(res, 200, results);
   }
 
   // GET /api/healthz

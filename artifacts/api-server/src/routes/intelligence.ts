@@ -8,17 +8,43 @@ const router: IRouter = Router();
 const liveCachePath = path.resolve(process.cwd(), "data/live-intelligence-cache.json");
 const fixturePath = path.resolve(process.cwd(), "fixtures/trade-signals-dataset.json");
 
+const LANXESS_TICKERS = new Set(["LXS.DE", "LNXSF", "LNXSY", "LXS"]);
+
+function isLanxessItem(item: any): boolean {
+  if (!item) return false;
+  if (typeof item === "string") {
+    const s = item.trim().toUpperCase();
+    return LANXESS_TICKERS.has(s) || s.includes("LANXESS");
+  }
+  const ticker = (item.ticker || item.symbol || "").trim().toUpperCase();
+  if (ticker && LANXESS_TICKERS.has(ticker)) return true;
+  const text = `${item.companyName || ""} ${item.name || ""} ${item.headline || ""} ${item.title || ""}`.toUpperCase();
+  return text.includes("LANXESS");
+}
+
+function sanitize(data: any): any {
+  if (!data) return data;
+  const clean = { ...data };
+  if (Array.isArray(clean.signals)) clean.signals = clean.signals.filter((s: any) => !isLanxessItem(s));
+  if (Array.isArray(clean.disclosures)) clean.disclosures = clean.disclosures.filter((d: any) => !isLanxessItem(d));
+  if (Array.isArray(clean.news)) clean.news = clean.news.filter((n: any) => !isLanxessItem(n));
+  if (Array.isArray(clean.quotes)) clean.quotes = clean.quotes.filter((q: any) => !isLanxessItem(q));
+  if (Array.isArray(clean.politicians)) clean.politicians = clean.politicians.filter((p: any) => !isLanxessItem(p));
+  if (Array.isArray(clean.trumpPosts)) clean.trumpPosts = clean.trumpPosts.filter((t: any) => !isLanxessItem(t));
+  return clean;
+}
+
 function getDataset(): any {
   if (fs.existsSync(liveCachePath)) {
     try {
-      return JSON.parse(fs.readFileSync(liveCachePath, "utf-8"));
+      return sanitize(JSON.parse(fs.readFileSync(liveCachePath, "utf-8")));
     } catch (e) {
       console.warn("Could not load data/live-intelligence-cache.json:", e);
     }
   }
   if (fs.existsSync(fixturePath)) {
     try {
-      return JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+      return sanitize(JSON.parse(fs.readFileSync(fixturePath, "utf-8")));
     } catch (e) {
       console.warn("Could not load fixtures/trade-signals-dataset.json:", e);
     }
@@ -31,6 +57,20 @@ router.get("/summary", (_req: Request, res: Response) => {
   const dataset = getDataset();
   res.json(dataset.summary);
 });
+
+// GET /api/performance
+router.get("/performance", async (_req: Request, res: Response) => {
+  try {
+    const { getBenchmarkPerformance } = (await import(
+      "../../../../lib/data-feed/live-intelligence-service.mjs"
+    )) as any;
+    res.json(getBenchmarkPerformance());
+  } catch {
+    const dataset = getDataset();
+    res.json(dataset.benchmarkPerformance || dataset.summary?.benchmarkPerformance || {});
+  }
+});
+
 
 // GET /api/status
 router.get("/status", (_req: Request, res: Response) => {
@@ -130,4 +170,60 @@ router.get("/quotes", (_req: Request, res: Response) => {
   res.json(dataset.quotes || []);
 });
 
+// GET /api/tickers
+router.get("/tickers", async (_req: Request, res: Response) => {
+  try {
+    const { getTrackedTickers } = (await import(
+      "../../../../lib/data-feed/live-intelligence-service.mjs"
+    )) as any;
+    res.json(getTrackedTickers());
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch tracked tickers", message: err.message });
+  }
+});
+
+// POST /api/tickers
+router.post("/tickers", async (req: Request, res: Response) => {
+  try {
+    const { ticker } = req.body || {};
+    const { addUserTrackedTicker } = (await import(
+      "../../../../lib/data-feed/live-intelligence-service.mjs"
+    )) as any;
+    const result = await addUserTrackedTicker(ticker);
+    res.json(result);
+  } catch (err: any) {
+    const status = err.message?.includes("Invalid") || err.message?.includes("LANXESS") || err.message?.includes("already tracked")
+      ? 400
+      : 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+// DELETE /api/tickers/:ticker
+router.delete("/tickers/:ticker", async (req: Request, res: Response) => {
+  try {
+    const ticker = String(req.params.ticker);
+    const { removeUserTrackedTicker } = (await import(
+      "../../../../lib/data-feed/live-intelligence-service.mjs"
+    )) as any;
+    const result = removeUserTrackedTicker(ticker);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// GET /api/trump-posts
+router.get("/trump-posts", async (_req: Request, res: Response) => {
+  try {
+    const { getCachedTrumpPosts } = (await import(
+      "../../../../lib/data-feed/trump-tracker.mjs"
+    )) as any;
+    res.json(getCachedTrumpPosts());
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch Trump posts", message: err.message });
+  }
+});
+
 export default router;
+

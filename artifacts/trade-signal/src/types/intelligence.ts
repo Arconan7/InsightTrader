@@ -160,14 +160,57 @@ export interface DashboardSummary {
   lastUpdatedIso: string;
   dataSourceMode?: string;
   dataSources?: string[];
+  benchmarkPerformance?: BenchmarkPerformanceMetrics;
+}
+
+export interface EvaluatedSignalItem {
+  signalId: string;
+  ticker: string;
+  companyName: string;
+  direction?: string;
+  verdictAction: string;
+  entryPrice: number;
+  currentPrice: number;
+  signalReturnPct: number;
+  benchmarkReturnPct: number;
+  excessReturnPct: number;
+  isWin: boolean;
+  generatedAt: string;
+  sourceUrl: string;
+  benchmarkSourceUrl: string;
+}
+
+export interface BenchmarkPerformanceMetrics {
+  isSufficientData: boolean;
+  confidenceDisplay: string;
+  confidenceScorePct: number | null;
+  insightTraderReturnPct: number;
+  benchmarkReturnPct: number;
+  excessReturnPct: number;
+  evaluatedSignalsCount: number;
+  winRatePct: number;
+  tStatistic: number | null;
+  sampleStdDev: number | null;
+  standardError: number | null;
+  benchmarkName: string;
+  benchmarkTicker: string;
+  benchmarkCurrentPrice: number;
+  formula: string;
+  methodology: string;
+  disclaimer: string;
+  evaluatedSignals: EvaluatedSignalItem[];
+  reason?: string;
 }
 
 export interface InsightDataset {
   summary: DashboardSummary;
+  benchmarkPerformance?: BenchmarkPerformanceMetrics;
   signals: TradeSignal[];
   disclosures: PublicDisclosure[];
   politicians: Politician[];
   news: NewsArticle[];
   quotes: StockQuote[];
+  trumpPosts?: TrumpPost[];
 }
+
 

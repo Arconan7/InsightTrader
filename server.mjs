@@ -8,6 +8,7 @@ import {
   getTrackedTickers,
   addUserTrackedTicker,
   removeUserTrackedTicker,
+  getBenchmarkPerformance,
   CORE_TICKERS,
 } from './lib/data-feed/live-intelligence-service.mjs';
 import { loadTrumpPosts, getTrumpPostsForTicker } from './lib/data-feed/trump-tracker.mjs';
@@ -60,6 +61,7 @@ function getDashboardHtml() {
   const rawDataset = getIntelligence();
   const dataset = sanitizeDataset(rawDataset);
   const tracked = getTrackedTickers();
+  const perf = getBenchmarkPerformance();
 
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -103,6 +105,11 @@ function getDashboardHtml() {
     </div>
 
     <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+      <button onclick="togglePerformanceModal()" class="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer font-semibold">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Market-Beating Stats
+      </button>
+
       <button onclick="toggleTransparencyModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         Fact-Check Standards
@@ -136,8 +143,40 @@ function getDashboardHtml() {
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-    <!-- KPI Metric Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-grid">
+    <!-- KPI Metric Cards - With Prominent Market Outperformance Confidence Stat -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="kpi-grid">
+      <!-- Card 1: Outperformance Confidence -->
+      <div onclick="togglePerformanceModal()" class="bg-slate-900/90 border border-emerald-800/80 hover:border-emerald-500/80 rounded-xl p-4 flex flex-col justify-between cursor-pointer transition-all shadow-lg group relative overflow-hidden">
+        <div class="space-y-1">
+          <div class="flex items-center gap-1.5">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Market Outperformance</p>
+            <span class="text-[9px] px-1 py-0.2 rounded border border-emerald-600/50 text-emerald-400 font-mono">vs S&P 500</span>
+          </div>
+          <h4 class="text-2xl font-black text-emerald-400 mt-1 flex items-baseline gap-1.5" id="kpi-confidence">
+            ${perf.confidenceDisplay}
+            <span class="text-[11px] text-slate-400 font-normal font-sans">${perf.isSufficientData ? 'Confidence' : ''}</span>
+          </h4>
+          <div class="text-[11px] text-slate-300 font-mono space-y-0.5 pt-0.5">
+            <div class="flex justify-between">
+              <span class="text-slate-400">InsightTrader:</span>
+              <strong class="text-emerald-400">+${perf.insightTraderReturnPct}%</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">S&P 500 (SPY):</span>
+              <strong class="text-slate-300">+${perf.benchmarkReturnPct}%</strong>
+            </div>
+            <div class="flex justify-between border-t border-slate-800 pt-0.5">
+              <span class="text-slate-400">Excess (Alpha):</span>
+              <strong class="text-emerald-400">+${perf.excessReturnPct}%</strong>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-emerald-400">
+          <span>${perf.evaluatedSignalsCount} Evaluated · ${perf.winRatePct}% Win Rate</span>
+          <span class="underline">Audit Math ↗</span>
+        </div>
+      </div>
+
       <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
         <div>
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Signals & Verdicts</p>
@@ -253,162 +292,232 @@ function getDashboardHtml() {
         </div>
       </section>
 
-      <!-- Right Column: Selected Briefing & Congressional Activity (5 cols) -->
-      <section class="lg:col-span-5 space-y-5">
-
-        <!-- Selected Briefing Card -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden" id="briefing-card">
-          <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="briefing-conviction">High Conviction</span>
-              <span class="text-[11px] text-slate-400" id="briefing-model">Nemotron-4-340B</span>
-            </div>
-            <span class="text-xs font-mono text-slate-400" id="briefing-date"></span>
-          </div>
-
-          <div class="p-5 space-y-5">
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-white" id="briefing-title">Select a stock</h3>
-                <a id="briefing-price-tag" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1"></a>
-              </div>
-              <p class="text-xs text-slate-400 mt-1" id="briefing-headline"></p>
-            </div>
-
-            <!-- OVERALL VERDICT SUMMARY & RATIONALE -->
-            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3" id="briefing-verdict-box">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Overall Verdict:</span>
-                  <span id="briefing-verdict-badge" class="px-2.5 py-0.5 rounded text-xs font-black"></span>
-                </div>
-                <span id="briefing-confidence" class="text-xs font-mono text-slate-400"></span>
-              </div>
-              <p class="text-xs text-slate-300 leading-relaxed" id="briefing-verdict-rationale"></p>
-            </div>
-
-            <!-- TRANSPARENT MULTI-PILLAR DERIVATION -->
-            <div class="p-3.5 rounded-lg bg-slate-950/90 border border-emerald-900/40 space-y-3">
-              <div class="flex items-center justify-between">
-                <h4 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                  <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Verdict Evidentiary Derivation & Weights
-                </h4>
-                <span class="text-[10px] text-slate-400">Mathematical Audit</span>
-              </div>
-              <p class="text-[11px] text-slate-400" id="briefing-calc-method">
-                Multi-pillar score derived from filings, market tape, news sentiment, and policy statements.
-              </p>
-              <div id="briefing-pillars-container" class="space-y-2">
-                <!-- Dynamically populated pillars -->
-              </div>
-            </div>
-
-            <!-- DEDICATED FACT-CHECK AUDIT TRAIL -->
-            <div class="p-3.5 rounded-lg bg-slate-950/90 border border-slate-800 space-y-3">
-              <div class="flex items-center justify-between">
-                <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
-                  <svg class="h-4 w-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                  Primary Source Audit Trail
-                </h4>
-                <span class="text-[10px] text-slate-400">Click to verify independently</span>
-              </div>
-              <div id="briefing-citations" class="space-y-2">
-                <!-- Dynamically populated citations -->
-              </div>
-            </div>
-
-            <!-- Disclosures Cited with Authentic House Clerk PDF Links -->
-            <div>
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5">
-                  <svg class="h-3.5 w-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  Official Congressional STOCK Act Filings
-                </span>
-                <span class="text-[10px] text-slate-500">U.S. House Clerk</span>
-              </h4>
-              <div id="briefing-disclosures" class="space-y-2"></div>
-            </div>
-
-            <!-- News Catalyst with Live External Links -->
-            <div>
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5">
-                  <svg class="h-3.5 w-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
-                  Live Correlated RSS News Feeds
-                </span>
-                <span class="text-[10px] text-slate-500">Public News Wires</span>
-              </h4>
-              <div id="briefing-news" class="space-y-2"></div>
-            </div>
-
-            <!-- Donald Trump Statements & Policy Wire for this Stock -->
-            <div id="briefing-trump-section">
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5">
-                  <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  Trump Social Media & Policy Context
-                </span>
-                <span class="text-[10px] text-rose-400/80">Low Weight (5%)</span>
-              </h4>
-              <div id="briefing-trump" class="space-y-2"></div>
-            </div>
-
-            <!-- Legislative References -->
-            <div id="briefing-hooks-section">
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
-                <svg class="h-3.5 w-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Legislative & Oversight Framework
-              </h4>
-              <ul id="briefing-hooks" class="text-xs text-slate-300 space-y-1 list-disc list-inside bg-slate-950 p-2.5 rounded border border-slate-800"></ul>
-            </div>
-
-            <!-- Risk Factors -->
-            <div>
-              <h4 class="text-[11px] font-semibold uppercase tracking-wider text-rose-400 mb-1 flex items-center gap-1">
-                <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Key Risk Factors
-              </h4>
-              <ul id="briefing-risks" class="text-xs text-slate-400 space-y-1 list-disc list-inside"></ul>
-            </div>
-          </div>
+      <!-- Right Column: Tab System (5 cols) -->
+      <section class="lg:col-span-5 space-y-4">
+        <!-- Tab Navigation Buttons -->
+        <div class="bg-slate-900 border border-slate-800 p-1 rounded-xl flex items-center gap-1 shadow-md">
+          <button id="tab-btn-stock" onclick="switchRightTab('stock')" class="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-emerald-600 text-white shadow-sm">
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Signal Briefing</span>
+            <span id="tab-stock-ticker" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30 text-emerald-200 font-bold">NVDA</span>
+          </button>
+          <button id="tab-btn-congress" onclick="switchRightTab('congress')" class="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <svg class="h-3.5 w-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"/></svg>
+            <span>Congress</span>
+            <span id="tab-congress-count" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30 text-purple-200 font-bold">${dataset.disclosures.length}</span>
+          </button>
+          <button id="tab-btn-news" onclick="switchRightTab('news')" class="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+            <svg class="h-3.5 w-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>
+            <span>News & Wire</span>
+            <span id="tab-news-count" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30 text-amber-200 font-bold">${dataset.news.length + (dataset.trumpPosts || []).length}</span>
+          </button>
         </div>
 
-        <!-- Congressional Trader Leaderboard with Verified Bioguide Photos -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
-          <div class="p-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-white flex items-center gap-2">
-              <svg class="h-4 w-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Tracked Members of Congress (Bioguide Verified)
-            </h3>
-            <span class="text-[11px] text-slate-400">STOCK Act Records</span>
-          </div>
+        <!-- TAB PANEL 1: STOCK BRIEFING DOSSIER -->
+        <div id="tab-panel-stock" class="space-y-4">
+          <!-- Selected Briefing Card -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden" id="briefing-card">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="briefing-conviction">High Conviction</span>
+                <span class="text-[11px] text-slate-400" id="briefing-model">Nemotron-4-340B</span>
+              </div>
+              <span class="text-xs font-mono text-slate-400" id="briefing-date"></span>
+            </div>
 
-          <div class="divide-y divide-slate-800/80 p-3" id="politicians-list">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- Donald Trump Public Social Media & Statement Wire -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
-          <div class="p-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="p-1.5 bg-rose-950 text-rose-400 rounded-lg border border-rose-800/50">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </span>
+            <div class="p-5 space-y-5">
               <div>
-                <h3 class="text-xs font-bold text-white">Trump Public Social Media & Policy Wire</h3>
-                <p class="text-[10px] text-slate-400">Truth Social & Verified Statements (Low 5% Verdict Weight)</p>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-base font-bold text-white" id="briefing-title">Select a stock</h3>
+                  <a id="briefing-price-tag" href="#" target="_blank" rel="noopener noreferrer" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1"></a>
+                </div>
+                <p class="text-xs text-slate-400 mt-1" id="briefing-headline"></p>
+              </div>
+
+              <!-- OVERALL VERDICT SUMMARY & RATIONALE -->
+              <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3" id="briefing-verdict-box">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Overall Verdict:</span>
+                    <span id="briefing-verdict-badge" class="px-2.5 py-0.5 rounded text-xs font-black"></span>
+                  </div>
+                  <span id="briefing-confidence" class="text-xs font-mono text-slate-400"></span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed" id="briefing-verdict-rationale"></p>
+              </div>
+
+              <!-- TRANSPARENT MULTI-PILLAR DERIVATION -->
+              <div class="p-3.5 rounded-lg bg-slate-950/90 border border-emerald-900/40 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Verdict Evidentiary Derivation & Weights
+                  </h4>
+                  <span class="text-[10px] text-slate-400">Mathematical Audit</span>
+                </div>
+                <p class="text-[11px] text-slate-400" id="briefing-calc-method">
+                  Multi-pillar score derived from filings, market tape, news sentiment, and policy statements.
+                </p>
+                <div id="briefing-pillars-container" class="space-y-2">
+                  <!-- Dynamically populated pillars -->
+                </div>
+              </div>
+
+              <!-- DEDICATED FACT-CHECK AUDIT TRAIL -->
+              <div class="p-3.5 rounded-lg bg-slate-950/90 border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <svg class="h-4 w-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    Primary Source Audit Trail
+                  </h4>
+                  <span class="text-[10px] text-slate-400">Click to verify independently</span>
+                </div>
+                <div id="briefing-citations" class="space-y-2">
+                  <!-- Dynamically populated citations -->
+                </div>
+              </div>
+
+              <!-- Disclosures Cited with Authentic House Clerk PDF Links -->
+              <div>
+                <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="h-3.5 w-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Official Congressional STOCK Act Filings
+                  </span>
+                  <span class="text-[10px] text-slate-500">U.S. House Clerk</span>
+                </h4>
+                <div id="briefing-disclosures" class="space-y-2"></div>
+              </div>
+
+              <!-- News Catalyst with Live External Links -->
+              <div>
+                <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="h-3.5 w-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+                    Live Correlated RSS News Feeds
+                  </span>
+                  <span class="text-[10px] text-slate-500">Public News Wires</span>
+                </h4>
+                <div id="briefing-news" class="space-y-2"></div>
+              </div>
+
+              <!-- Donald Trump Statements & Policy Wire for this Stock -->
+              <div id="briefing-trump-section">
+                <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Trump Social Media & Policy Context
+                  </span>
+                  <span class="text-[10px] text-rose-400/80">Low Weight (5%)</span>
+                </h4>
+                <div id="briefing-trump" class="space-y-2"></div>
+              </div>
+
+              <!-- Legislative References -->
+              <div id="briefing-hooks-section">
+                <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                  <svg class="h-3.5 w-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Legislative & Oversight Framework
+                </h4>
+                <ul id="briefing-hooks" class="text-xs text-slate-300 space-y-1 list-disc list-inside bg-slate-950 p-2.5 rounded border border-slate-800"></ul>
+              </div>
+
+              <!-- Risk Factors -->
+              <div>
+                <h4 class="text-[11px] font-semibold uppercase tracking-wider text-rose-400 mb-1 flex items-center gap-1">
+                  <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Key Risk Factors
+                </h4>
+                <ul id="briefing-risks" class="text-xs text-slate-400 space-y-1 list-disc list-inside"></ul>
               </div>
             </div>
-            <span class="text-[10px] text-slate-400 font-mono" id="trump-posts-count"></span>
-          </div>
-
-          <div class="divide-y divide-slate-800/80 p-3 max-h-96 overflow-y-auto custom-scrollbar" id="trump-posts-feed">
-            <!-- Dynamically populated -->
           </div>
         </div>
 
+        <!-- TAB PANEL 2: CONGRESSIONAL TRADING ACTIVITY -->
+        <div id="tab-panel-congress" class="hidden space-y-4">
+          <!-- Congress Controls Card -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <svg class="h-4 w-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"/></svg>
+                Congressional STOCK Act Intelligence
+              </h3>
+              <span class="text-[10px] px-2 py-0.5 rounded border border-purple-800/60 text-purple-300 font-mono">${dataset.politicians.length} Profiles</span>
+            </div>
+            <p class="text-xs text-slate-400">Official House Clerk 2026FD PTR records and Senate financial disclosures.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1">
+                <input type="text" id="congress-search-input" oninput="filterCongress()" placeholder="Search 100+ members by name, state, party..." class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500">
+              </div>
+              <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 shrink-0">
+                <button id="chamber-all-btn" onclick="setChamberFilter('ALL')" class="px-2 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white cursor-pointer">All</button>
+                <button id="chamber-house-btn" onclick="setChamberFilter('House')" class="px-2 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer">House</button>
+                <button id="chamber-senate-btn" onclick="setChamberFilter('Senate')" class="px-2 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer">Senate</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+              <span class="text-[11px] text-slate-400" id="congress-selection-status">Showing all member transactions</span>
+              <div class="flex items-center gap-2">
+                <button onclick="selectAllPoliticians()" class="text-[11px] text-purple-400 hover:text-purple-300 underline cursor-pointer">Select All</button>
+                <button onclick="clearPoliticianSelection()" class="text-[11px] text-rose-400 hover:text-rose-300 underline cursor-pointer">Clear Selection</button>
+              </div>
+            </div>
+
+            <div class="max-h-36 overflow-y-auto custom-scrollbar p-2 bg-slate-950 rounded-lg border border-slate-800" id="congress-chips-tray">
+              <!-- Dynamically populated member selector cards -->
+            </div>
+          </div>
+
+          <!-- Congressional Disclosure Feed -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+            <div class="p-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+              <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
+                <svg class="h-4 w-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Official Disclosures & STOCK Act Filings
+              </h3>
+              <span class="text-[11px] text-slate-400 font-mono" id="congress-disclosure-count"></span>
+            </div>
+            <div class="p-3 max-h-[600px] overflow-y-auto custom-scrollbar divide-y divide-slate-800/80 space-y-3" id="congress-feed-container">
+              <!-- Injected by renderCongressTab() -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 3: NEWS & WIRE STREAM -->
+        <div id="tab-panel-news" class="hidden space-y-4">
+          <!-- News Filters Card -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <svg class="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>
+                Live Market & Regulatory Wire
+              </h3>
+              <span class="text-[10px] px-2 py-0.5 rounded border border-amber-800/60 text-amber-300 font-mono">Multi-Feed Wire</span>
+            </div>
+            <p class="text-xs text-slate-400">Aggregating Yahoo Finance, CNBC, MarketWatch, SEC/Regulatory wires & Donald Trump Truth Social statements.</p>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button id="feed-all-btn" onclick="setFeedType('ALL')" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-amber-600 text-white cursor-pointer">All Wire</button>
+                <button id="feed-articles-btn" onclick="setFeedType('articles')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer">Reputable News</button>
+                <button id="feed-trump-btn" onclick="setFeedType('trump')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer">Trump Wire</button>
+              </div>
+
+              <select id="news-ticker-select" onchange="filterNews()" class="bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 font-mono">
+                <option value="ALL">All Tickers</option>
+                ${tracked.allTickers.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <!-- Combined News & Wire Stream -->
+          <div class="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar" id="news-stream-container">
+            <!-- Dynamically populated articles and styled Trump Truth Social posts -->
+          </div>
+        </div>
       </section>
     </div>
   </main>
@@ -469,10 +578,188 @@ function getDashboardHtml() {
     </div>
   </div>
 
+  <!-- PERFORMANCE AUDIT MODAL -->
+  <div id="performance-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="p-2 bg-emerald-950 text-emerald-400 rounded-lg border border-emerald-800/60">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Market-Outperformance Confidence & Mathematical Audit</h3>
+            <p class="text-xs text-slate-400">Paired difference Student-t test against S&P 500 benchmark (SPY)</p>
+          </div>
+        </div>
+        <button onclick="togglePerformanceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-300 space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        <!-- Top Stats Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="bg-slate-950 p-3 rounded-lg border border-emerald-800/60">
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Confidence Score</span>
+            <div class="text-xl font-black text-emerald-400 mt-0.5">${perf.confidenceDisplay}</div>
+            <span class="text-[10px] text-slate-500 font-mono">vs S&P 500</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 font-bold uppercase">InsightTrader Return</span>
+            <div class="text-xl font-black text-emerald-400 mt-0.5">+${perf.insightTraderReturnPct}%</div>
+            <span class="text-[10px] text-slate-500 font-mono">Mean sample return</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Benchmark (SPY)</span>
+            <div class="text-xl font-black text-slate-200 mt-0.5">+${perf.benchmarkReturnPct}%</div>
+            <span class="text-[10px] text-slate-500 font-mono">S&P 500 tape return</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 font-bold uppercase">Mean Excess (Alpha)</span>
+            <div class="text-xl font-black text-emerald-400 mt-0.5">+${perf.excessReturnPct}%</div>
+            <span class="text-[10px] text-slate-500 font-mono">Win Rate: ${perf.winRatePct}%</span>
+          </div>
+        </div>
+
+        <!-- Mathematical Methodology Box -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+              <svg class="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Exact Statistical Methodology & Formulas
+            </h4>
+            <span class="text-[9px] px-1.5 py-0.5 rounded border border-slate-700 text-slate-400 font-mono">Student-t Hypothesis Test</span>
+          </div>
+          <p class="text-slate-300 text-[11px] leading-relaxed">
+            InsightTrader computes statistical confidence that recommendations outperform the market using a <strong>paired difference Student-t test</strong> comparing observed percentage returns against the S&P 500 Index (SPY ETF) over identical holding periods.
+          </p>
+
+          <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono text-[11px] space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span>1. Paired Difference:</span>
+              <span class="text-emerald-400">D_i = Return(Signal_i) - Return(SPY_i)</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span>2. Sample Mean Difference:</span>
+              <span class="text-emerald-400">D̄ = (1 / n) * Σ D_i = +${perf.excessReturnPct}%</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span>3. Sample Standard Deviation:</span>
+              <span class="text-slate-300">s_D = √[ Σ(D_i - D̄)² / (n - 1) ] = ${perf.sampleStdDev}</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span>4. Standard Error:</span>
+              <span class="text-slate-300">SE = s_D / √n = ${perf.standardError}</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span>5. Student-t Statistic:</span>
+              <span class="text-emerald-400">t = D̄ / SE = ${perf.tStatistic}</span>
+            </div>
+            <div class="flex justify-between pt-0.5">
+              <span>6. CDF Confidence Metric:</span>
+              <span class="text-emerald-400">Confidence = Φ(t) = ${perf.confidenceDisplay}</span>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-400">
+            <strong>Sample Size Threshold:</strong> Minimum sample threshold is <strong>n ≥ 3</strong> signals. If fewer than 3 signals are available, the metric explicitly displays <span class="font-mono text-amber-400">"Insufficient Data"</span> to avoid unrepresentative significance.
+          </p>
+        </div>
+
+        <!-- Underlying Data Sources & Benchmark -->
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+          <h4 class="text-xs font-bold text-white flex items-center justify-between">
+            <span>Underlying Tape Sources & Benchmark</span>
+            <a href="https://finance.yahoo.com/quote/SPY" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline flex items-center gap-1 font-normal">
+              View SPY Tape on Yahoo Finance ↗
+            </a>
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-900 p-2.5 rounded border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Benchmark Instrument:</span>
+              <strong class="text-white">SPDR S&P 500 ETF Trust (Ticker: SPY)</strong>
+              <span class="text-slate-400 block text-[10px] mt-1">Tape Price: <strong class="text-emerald-400 font-mono">$${perf.benchmarkCurrentPrice}</strong></span>
+            </div>
+            <div class="bg-slate-900 p-2.5 rounded border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Market Price Provider:</span>
+              <strong class="text-white">Yahoo Finance Real-Time Tape</strong>
+              <span class="text-slate-400 block text-[10px] mt-1">Updated at feed synchronization timestamps.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evaluated Signals Table -->
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white">Evaluated Recommendation Sample (n = ${perf.evaluatedSignalsCount})</h4>
+            <span class="text-[10px] text-slate-400">Auditable Inputs</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] text-left">
+              <thead class="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+                <tr>
+                  <th class="py-2 pr-2">Ticker</th>
+                  <th class="py-2 px-2">Signal</th>
+                  <th class="py-2 px-2">Entry Tape</th>
+                  <th class="py-2 px-2">Current Tape</th>
+                  <th class="py-2 px-2">Signal %</th>
+                  <th class="py-2 px-2">SPY %</th>
+                  <th class="py-2 pl-2 text-right">Alpha (D_i)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 font-mono">
+                ${perf.evaluatedSignals.map(item => `
+                  <tr class="hover:bg-slate-900/50">
+                    <td class="py-2 pr-2 font-bold text-white">
+                      <a href="https://finance.yahoo.com/quote/${item.ticker}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">
+                        ${item.ticker}
+                      </a>
+                    </td>
+                    <td class="py-2 px-2"><span class="text-emerald-400 font-semibold">${item.direction}</span></td>
+                    <td class="py-2 px-2 text-slate-300">$${item.entryPrice}</td>
+                    <td class="py-2 px-2 text-slate-300">$${item.currentPrice}</td>
+                    <td class="py-2 px-2 font-semibold text-emerald-400">+${item.returnPct}%</td>
+                    <td class="py-2 px-2 text-slate-400">+${item.benchmarkReturnPct}%</td>
+                    <td class="py-2 pl-2 text-right font-bold text-emerald-400">+${item.excessReturnPct}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Regulatory Compliance Disclaimer (Mandatory) -->
+        <div class="p-3 bg-amber-950/40 rounded-xl border border-amber-800/60 space-y-1">
+          <div class="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
+            <svg class="h-4 w-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Mandatory Regulatory & Statistical Notice</span>
+          </div>
+          <p class="text-[11px] text-amber-200/90 leading-relaxed">
+            Do not interpret confidence as a guarantee of future returns. InsightTrader's market-outperformance confidence metric is a backward-looking paired-difference statistical hypothesis test comparing observed signal returns against the S&P 500 benchmark (SPY). Past performance is no guarantee of future trading performance. This application does not provide registered investment advisory services.
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="togglePerformanceModal()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs cursor-pointer">
+          Close Audit
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Client-side script to render dataset and wire interactions -->
   <script>
     let currentDataset = ${JSON.stringify(dataset)};
+    let currentPerformance = ${JSON.stringify(perf)};
     let activeSignalId = currentDataset.signals[0]?.id;
+    let activeRightTab = 'stock';
+    let selectedPoliticianIds = new Set();
+    let congressSearchQuery = '';
+    let congressChamberFilter = 'ALL';
+    let newsTickerFilter = 'ALL';
+    let newsFeedType = 'ALL';
 
     function isLanxessString(str) {
       if (!str) return false;
@@ -482,6 +769,11 @@ function getDashboardHtml() {
 
     function toggleTransparencyModal() {
       const modal = document.getElementById('transparency-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function togglePerformanceModal() {
+      const modal = document.getElementById('performance-modal');
       modal.classList.toggle('hidden');
     }
 
@@ -625,6 +917,7 @@ function getDashboardHtml() {
       activeSignalId = id;
       renderSignals();
       renderBriefing();
+      switchRightTab('stock');
     }
 
     function selectSignalByTicker(ticker) {
@@ -633,6 +926,7 @@ function getDashboardHtml() {
         activeSignalId = sig.id;
         renderSignals();
         renderBriefing();
+        switchRightTab('stock');
       }
     }
 
@@ -989,6 +1283,8 @@ function getDashboardHtml() {
         renderTrackedChips();
         renderSignals();
         renderBriefing();
+        renderCongressTab();
+        renderNewsTab();
       } catch (err) {
         console.error('Error refreshing local data:', err);
       }
@@ -1013,8 +1309,8 @@ function getDashboardHtml() {
           renderTrackedChips();
           renderSignals();
           renderBriefing();
-          renderPoliticians();
-          renderTrumpPosts();
+          renderCongressTab();
+          renderNewsTab();
           text.innerText = 'Synced!';
           setTimeout(() => { text.innerText = 'Refresh Live Feeds'; }, 2000);
         } else {
@@ -1031,6 +1327,313 @@ function getDashboardHtml() {
       }
     }
 
+    function switchRightTab(tab) {
+      activeRightTab = tab;
+      const stockPanel = document.getElementById('tab-panel-stock');
+      const congressPanel = document.getElementById('tab-panel-congress');
+      const newsPanel = document.getElementById('tab-panel-news');
+
+      const stockBtn = document.getElementById('tab-btn-stock');
+      const congressBtn = document.getElementById('tab-btn-congress');
+      const newsBtn = document.getElementById('tab-btn-news');
+
+      if (!stockPanel || !congressPanel || !newsPanel) return;
+
+      stockPanel.classList.add('hidden');
+      congressPanel.classList.add('hidden');
+      newsPanel.classList.add('hidden');
+
+      stockBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-400 hover:text-slate-200 hover:bg-slate-800/60';
+      congressBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-400 hover:text-slate-200 hover:bg-slate-800/60';
+      newsBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-400 hover:text-slate-200 hover:bg-slate-800/60';
+
+      if (tab === 'stock') {
+        stockPanel.classList.remove('hidden');
+        stockBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-emerald-600 text-white shadow-sm';
+        renderBriefing();
+      } else if (tab === 'congress') {
+        congressPanel.classList.remove('hidden');
+        congressBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-purple-600 text-white shadow-sm';
+        renderCongressTab();
+      } else if (tab === 'news') {
+        newsPanel.classList.remove('hidden');
+        newsBtn.className = 'flex-1 py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-amber-600 text-white shadow-sm';
+        renderNewsTab();
+      }
+    }
+
+    function setChamberFilter(ch) {
+      congressChamberFilter = ch;
+      const allBtn = document.getElementById('chamber-all-btn');
+      const houseBtn = document.getElementById('chamber-house-btn');
+      const senateBtn = document.getElementById('chamber-senate-btn');
+      if (allBtn) allBtn.className = ch === 'ALL' ? 'px-2 py-1 rounded text-[11px] font-semibold bg-purple-600 text-white cursor-pointer' : 'px-2 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      if (houseBtn) houseBtn.className = ch === 'House' ? 'px-2 py-1 rounded text-[11px] font-semibold bg-blue-600 text-white cursor-pointer' : 'px-2 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      if (senateBtn) senateBtn.className = ch === 'Senate' ? 'px-2 py-1 rounded text-[11px] font-semibold bg-purple-700 text-white cursor-pointer' : 'px-2 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      renderCongressTab();
+    }
+
+    function filterCongress() {
+      const input = document.getElementById('congress-search-input');
+      congressSearchQuery = input ? input.value.toLowerCase() : '';
+      renderCongressTab();
+    }
+
+    function togglePoliticianSelection(id) {
+      if (selectedPoliticianIds.has(id)) {
+        selectedPoliticianIds.delete(id);
+      } else {
+        selectedPoliticianIds.add(id);
+      }
+      renderCongressTab();
+    }
+
+    function selectAllPoliticians() {
+      const filtered = getFilteredPoliticians();
+      filtered.forEach(p => selectedPoliticianIds.add(p.id));
+      renderCongressTab();
+    }
+
+    function clearPoliticianSelection() {
+      selectedPoliticianIds.clear();
+      renderCongressTab();
+    }
+
+    function getFilteredPoliticians() {
+      return (currentDataset.politicians || []).filter(p => {
+        if (isLanxessString(p)) return false;
+        const matchesChamber = congressChamberFilter === 'ALL' || p.chamber.toLowerCase() === congressChamberFilter.toLowerCase();
+        const matchesSearch = !congressSearchQuery ||
+                              p.name.toLowerCase().includes(congressSearchQuery) ||
+                              p.state.toLowerCase().includes(congressSearchQuery) ||
+                              (p.party && p.party.toLowerCase().includes(congressSearchQuery));
+        return matchesChamber && matchesSearch;
+      });
+    }
+
+    function renderCongressTab() {
+      const filteredPols = getFilteredPoliticians();
+      const chipsTray = document.getElementById('congress-chips-tray');
+      if (chipsTray) {
+        chipsTray.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">' + filteredPols.map(pol => {
+          const isSelected = selectedPoliticianIds.has(pol.id) || selectedPoliticianIds.has(pol.name);
+          const initials = pol.name ? pol.name.split(' ').map(n=>n[0]).join('').slice(0,2) : 'US';
+          const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100%25' height='100%25' fill='%23334155'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='36' font-weight='bold' fill='%23f8fafc'>" + initials + "</text></svg>";
+
+          return \`
+            <div onclick="togglePoliticianSelection('\${pol.id}')" class="p-1.5 rounded flex items-center justify-between gap-2 border text-xs cursor-pointer transition-colors \${isSelected ? 'bg-purple-950/70 border-purple-600/80 text-white' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-900'}">
+              <div class="flex items-center gap-2 min-w-0">
+                <img src="\${pol.avatarUrl}" alt="\${pol.name}" class="h-6 w-6 rounded-full object-cover border border-slate-700 shrink-0" onerror="this.onerror=null; this.src='\${fallbackSvg}'" />
+                <div class="min-w-0 truncate">
+                  <span class="font-medium text-[11px] block truncate">\${pol.name}</span>
+                  <span class="text-[9px] text-slate-400 block">\${pol.chamber === 'Senate' ? 'Sen.' : 'Rep.'} (\${pol.party[0]}-\${pol.state}) · \${pol.totalTradesTracked} trades</span>
+                </div>
+              </div>
+              <div class="shrink-0 text-purple-400 font-bold text-xs">\${isSelected ? '✓' : '□'}</div>
+            </div>
+          \`;
+        }).join('') + '</div>';
+      }
+
+      const statusEl = document.getElementById('congress-selection-status');
+      if (statusEl) {
+        if (selectedPoliticianIds.size > 0) {
+          statusEl.innerHTML = '<strong class="text-purple-300">' + selectedPoliticianIds.size + ' members selected</strong>';
+        } else {
+          statusEl.innerText = 'Showing all member transactions';
+        }
+      }
+
+      const filteredDisclosures = (currentDataset.disclosures || []).filter(d => {
+        if (isLanxessString(d)) return false;
+        if (selectedPoliticianIds.size > 0) {
+          return selectedPoliticianIds.has(d.politicianId) || selectedPoliticianIds.has(d.politicianName);
+        }
+        return true;
+      });
+
+      const countEl = document.getElementById('congress-disclosure-count');
+      if (countEl) countEl.innerText = filteredDisclosures.length + ' Records';
+      const tabCountEl = document.getElementById('tab-congress-count');
+      if (tabCountEl) tabCountEl.innerText = filteredDisclosures.length;
+
+      const feedContainer = document.getElementById('congress-feed-container');
+      if (feedContainer) {
+        if (filteredDisclosures.length === 0) {
+          feedContainer.innerHTML = '<div class="p-6 text-center text-slate-500 text-xs">No congressional disclosures match the current selection. <button onclick="clearPoliticianSelection()" class="text-purple-400 hover:underline">Reset filters</button></div>';
+          return;
+        }
+
+        feedContainer.innerHTML = filteredDisclosures.map(d => {
+          const isBuy = d.transactionType === 'BUY';
+          const initials = (d.politicianName || 'MC').split(' ').map(n=>n[0]).join('').slice(0,2);
+          const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100%25' height='100%25' fill='%23334155'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='36' font-weight='bold' fill='%23f8fafc'>" + initials + "</text></svg>";
+          const bioguideLink = d.bioguideId ? 'https://bioguide.congress.gov/search/bio/' + d.bioguideId : '#';
+          const pdfUrl = d.filingDocUrl || (d.docId ? 'https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/' + d.docId + '.pdf' : 'https://disclosures-clerk.house.gov');
+
+          return \`
+            <div class="pt-3 first:pt-0 space-y-2">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                  <img src="\${d.avatarUrl || (d.bioguideId ? 'https://unitedstates.github.io/images/congress/225x275/' + d.bioguideId + '.jpg' : fallbackSvg)}" alt="\${d.politicianName}" class="h-9 w-9 rounded-full object-cover border border-slate-700 bg-slate-800 shrink-0" onerror="this.onerror=null; this.src='\${fallbackSvg}'" />
+                  <div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <a href="\${bioguideLink}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-white hover:text-purple-300 underline flex items-center gap-1">
+                        \${d.politicianName}
+                        <svg class="h-2.5 w-2.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      </a>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded border \${d.chamber === 'Senate' ? 'bg-purple-950 text-purple-300 border-purple-800' : 'bg-blue-950 text-blue-300 border-blue-800'}">\${d.chamber}</span>
+                      <span class="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-mono">\${d.party?.[0] || '?'}-\${d.state || 'US'}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">\${d.committeeContext || (d.chamber === 'Senate' ? 'U.S. Senate' : 'U.S. House of Representatives')}</span>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="text-xs font-bold px-2 py-0.5 rounded border \${isBuy ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : 'bg-rose-950 text-rose-300 border-rose-800'}">\${d.transactionType}</span>
+                  <span class="text-[11px] font-mono text-slate-300 block mt-0.5">\${d.amountBracket}</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <button onclick="selectSignalByTicker('\${d.ticker}')" class="font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded text-xs hover:text-emerald-400 cursor-pointer">\${d.ticker}</button>
+                  <span class="text-slate-400 text-[11px]">\${d.assetDescription}</span>
+                </div>
+                <div class="flex items-center gap-3 text-[11px] text-slate-400">
+                  <span>Traded: <strong class="text-slate-300">\${d.transactionDate}</strong></span>
+                  <span>Filed: <strong class="text-slate-300">\${d.filingDate}</strong></span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-850">
+                <span class="text-slate-500 font-mono">Doc ID: \${d.docId || '2026-STOCK-ACT'}</span>
+                <a href="\${pdfUrl}" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-purple-300 underline font-medium flex items-center gap-1">
+                  Official Clerk PDF Document
+                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
+            </div>
+          \`;
+        }).join('');
+      }
+    }
+
+    function setFeedType(type) {
+      newsFeedType = type;
+      const allBtn = document.getElementById('feed-all-btn');
+      const artBtn = document.getElementById('feed-articles-btn');
+      const trumpBtn = document.getElementById('feed-trump-btn');
+      if (allBtn) allBtn.className = type === 'ALL' ? 'px-2.5 py-1 rounded text-[11px] font-semibold bg-amber-600 text-white cursor-pointer' : 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      if (artBtn) artBtn.className = type === 'articles' ? 'px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-600 text-white cursor-pointer' : 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      if (trumpBtn) trumpBtn.className = type === 'trump' ? 'px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-600 text-white cursor-pointer' : 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer';
+      renderNewsTab();
+    }
+
+    function filterNews() {
+      const select = document.getElementById('news-ticker-select');
+      newsTickerFilter = select ? select.value : 'ALL';
+      renderNewsTab();
+    }
+
+    function renderNewsTab() {
+      const container = document.getElementById('news-stream-container');
+      if (!container) return;
+      const items = [];
+
+      if (newsFeedType === 'ALL' || newsFeedType === 'articles') {
+        (currentDataset.news || []).forEach(art => {
+          if (isLanxessString(art)) return;
+          if (newsTickerFilter !== 'ALL') {
+            const t = newsTickerFilter.toUpperCase();
+            if (!(art.relatedTickers || []).includes(t) && !(art.headline || '').toUpperCase().includes(t)) {
+              return;
+            }
+          }
+          items.push({ type: 'article', data: art, date: new Date(art.publishedAt || Date.now()) });
+        });
+      }
+
+      if (newsFeedType === 'ALL' || newsFeedType === 'trump') {
+        (currentDataset.trumpPosts || []).forEach(tp => {
+          if (isLanxessString(tp)) return;
+          if (newsTickerFilter !== 'ALL') {
+            const t = newsTickerFilter.toUpperCase();
+            if (!(tp.matchedTickers || []).includes(t) && !(tp.content || '').toUpperCase().includes(t)) {
+              return;
+            }
+          }
+          items.push({ type: 'trump', data: tp, date: new Date(tp.publishedAt || Date.now()) });
+        });
+      }
+
+      items.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+      const tabCountEl = document.getElementById('tab-news-count');
+      if (tabCountEl) tabCountEl.innerText = items.length;
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-500 bg-slate-900 rounded-xl border border-slate-800 text-xs">No articles match current filters.</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        if (item.type === 'trump') {
+          const tp = item.data;
+          return \`
+            <div class="p-4 rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-rose-950/20 border border-rose-900/60 shadow-sm space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-rose-300 flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    \${tp.author}
+                  </span>
+                  <span class="text-slate-500 font-mono text-[10px]">\${tp.handle}</span>
+                  <span class="bg-rose-950 text-rose-300 border border-rose-800 text-[9px] py-0 px-1 rounded">Truth Social</span>
+                  <span class="border border-amber-700/60 text-amber-300 text-[9px] py-0 px-1 rounded">5% Weight</span>
+                </div>
+                <span class="text-slate-500 font-mono text-[10px]">\${new Date(tp.publishedAt).toLocaleDateString()}</span>
+              </div>
+              <p class="text-xs text-slate-200 leading-relaxed font-sans bg-slate-950/60 p-2.5 rounded border border-rose-950/40">"\${tp.content}"</p>
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-rose-950/50 text-[11px]">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-900 text-slate-300 border border-slate-800">\${tp.topic}</span>
+                  \${(tp.matchedTickers || []).map(t => \`<button onclick="selectSignalByTicker('\${t}')" class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-emerald-400 hover:text-white cursor-pointer">\${t}</button>\`).join('')}
+                </div>
+                <a href="\${tp.postUrl}" target="_blank" rel="noopener noreferrer" class="text-rose-400 hover:text-rose-300 underline font-medium flex items-center gap-1">
+                  View Truth Social Post
+                  <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
+            </div>
+          \`;
+        }
+
+        const art = item.data;
+        const isRegulatory = (art.source || '').includes('SEC') || (art.source || '').includes('Regulatory') || (art.source || '').includes('Policy');
+        return \`
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] py-0 px-1.5 rounded border \${isRegulatory ? 'border-purple-800/80 bg-purple-950/40 text-purple-300' : 'border-emerald-800/80 bg-emerald-950/40 text-emerald-300'}">\${art.source || 'Financial Wire'}</span>
+                \${art.sentiment ? \`<span class="text-[10px] font-mono font-bold \${art.sentiment === 'BULLISH' ? 'text-emerald-400' : art.sentiment === 'BEARISH' ? 'text-rose-400' : 'text-slate-400'}">\${art.sentiment}</span>\` : ''}
+              </div>
+              <span class="text-slate-500 font-mono text-[10px]">\${new Date(art.publishedAt).toLocaleDateString()}</span>
+            </div>
+            <a href="\${art.url}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm font-semibold text-white hover:text-amber-300 block transition-colors leading-snug">
+              \${art.headline} ↗
+            </a>
+            \${art.summary ? \`<p class="text-xs text-slate-400 leading-relaxed line-clamp-2">\${art.summary}</p>\` : ''}
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/80 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                \${(art.relatedTickers || []).map(t => \`<button onclick="selectSignalByTicker('\${t}')" class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-amber-400 hover:text-white cursor-pointer">\${t}</button>\`).join('')}
+              </div>
+              <a href="\${art.url}" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:text-amber-300 underline font-medium flex items-center gap-1">Read Full Article ↗</a>
+            </div>
+          </div>
+        \`;
+      }).join('');
+    }
+
     document.getElementById('search-input').addEventListener('input', renderSignals);
     document.getElementById('direction-filter').addEventListener('change', renderSignals);
 
@@ -1038,8 +1641,9 @@ function getDashboardHtml() {
     renderTrackedChips();
     renderSignals();
     renderBriefing();
-    renderPoliticians();
-    renderTrumpPosts();
+    renderCongressTab();
+    renderNewsTab();
+    switchRightTab('stock');
   </script>
 </body>
 </html>`;
@@ -1098,6 +1702,11 @@ const server = http.createServer(async (req, res) => {
   // GET /api/summary
   if (pathname === '/api/summary') {
     return sendJson(res, 200, dataset.summary);
+  }
+
+  // GET /api/performance - Market outperformance confidence against S&P 500
+  if (pathname === '/api/performance') {
+    return sendJson(res, 200, getBenchmarkPerformance());
   }
 
   // GET /api/tickers - Tracked tickers list
